@@ -49,6 +49,10 @@ internal value class BitmapSampleSize(val size: Int) {
       "Incorrect size = $size. BitmapRegionDecoder requires values based on powers of 2."
     }
   }
+
+  fun coerceAtMost(other: BitmapSampleSize): BitmapSampleSize {
+    return if (size > other.size) other else this
+  }
 }
 
 /** Collection of [ImageRegionTile] needed for drawing an image at a certain zoom level. */

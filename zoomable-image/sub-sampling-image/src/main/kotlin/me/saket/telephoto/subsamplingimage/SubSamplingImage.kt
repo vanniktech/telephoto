@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
 import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
+import me.saket.telephoto.subsamplingimage.internal.ViewportTile
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
 /**
@@ -60,8 +61,8 @@ fun SubSamplingImage(
         if (state.showTileBounds) {
           drawRect(
             color = Color.Black,
-            topLeft = tile.tile.bounds.topLeft.toOffset(),
-            size = tile.tile.bounds.size.toSize(),
+            topLeft = tile.bounds.topLeft.toOffset(),
+            size = tile.bounds.size.toSize(),
             style = Stroke(width = 2.dp.toPx()),
           )
         }
@@ -87,14 +88,14 @@ private fun DrawScope.drawImageTile(
   withTransform(
     transformBlock = {
       translate(
-        left = tile.tile.bounds.topLeft.x.toFloat(),
-        top = tile.tile.bounds.topLeft.y.toFloat(),
+        left = tile.bounds.topLeft.x.toFloat(),
+        top = tile.bounds.topLeft.y.toFloat(),
       )
     },
     drawBlock = {
       with(painter) {
         draw(
-          size = tile.tile.bounds.size.toSize(),
+          size = tile.bounds.size.toSize(),
           alpha = alpha,
           colorFilter = colorFilter,
         )

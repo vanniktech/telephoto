@@ -59,6 +59,17 @@ internal class RealSubSamplingImageState(
   internal var viewportSize: IntSize? by mutableStateOf(null)
   internal var showTileBounds = false  // Only used by tests.
 
+  /**
+   * Images collected from [ImageCache].
+   *
+   * Loaded images are kept in a separate state instead of being combined with viewport tiles
+   * because images are collected asynchronously, whereas viewport tiles are updated synchronously
+   * during the layout pass.
+   *
+   * This separation enables layout changes to be rendered immediately. In previous
+   * versions, layout changes caused image flickering because tile updates were asynchronous
+   * and lagged by one frame.
+   */
   private var loadedImages: ImmutableMap<ImageRegionTile, Painter> by mutableStateOf(persistentMapOf())
 
   private val isReadyToBeDisplayed: Boolean by derivedStateOf {
@@ -79,39 +90,35 @@ internal class RealSubSamplingImageState(
   }
 
   private val viewportTiles: ImmutableList<ViewportTile> by derivedStateOf {
-    val tileGrid = tileGrid
-    if (tileGrid == null) {
-      persistentListOf()
-    } else {
-      // todo:
-      // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
-      // a fallback. The base tile will hide again when all bitmaps have been loaded.
-      val canDrawBaseTile = true //foregroundRegions.isEmpty() || foregroundRegions.fastAny { it !in loadedBitmaps }
+    val tileGrid = tileGrid ?: return@derivedStateOf persistentListOf()
+    // todo:
+    // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
+    // a fallback. The base tile will hide again when all bitmaps have been loaded.
+    val canDrawBaseTile = true //foregroundRegions.isEmpty() || foregroundRegions.fastAny { it !in loadedBitmaps }
 
-      val transformation = contentTransformation()
-      val baseSampleSize = tileGrid.base.sampleSize
+    val transformation = contentTransformation()
+    val baseSampleSize = tileGrid.base.sampleSize
 
-      val currentSampleSize = ImageSampleSize
-        .calculateFor(zoom = transformation.scale.maxScale)
-        .coerceAtMost(baseSampleSize)
+    val currentSampleSize = ImageSampleSize
+      .calculateFor(zoom = transformation.scale.maxScale)
+      .coerceAtMost(baseSampleSize)
 
-      val isBaseSampleSize = currentSampleSize == baseSampleSize
-      val foregroundRegions = if (isBaseSampleSize) emptyList() else tileGrid.foreground[currentSampleSize]!!
+    val isBaseSampleSize = currentSampleSize == baseSampleSize
+    val foregroundRegions = if (isBaseSampleSize) emptyList() else tileGrid.foreground[currentSampleSize]!!
 
-      (listOf(tileGrid.base) + foregroundRegions)
-        .sortedByDescending { it.bounds.contains(transformation.centroid) }
-        .fastMapNotNull { region ->
-          val isBaseTile = region == tileGrid.base
-          val drawBounds = region.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset)
-          ViewportTile(
-            region = region,
-            bounds = drawBounds,
-            isVisible = if (isBaseTile) canDrawBaseTile else drawBounds.overlaps(viewportSize!!),
-            isBase = isBaseTile,
-          )
-        }
-        .toImmutableList()
-    }
+    (listOf(tileGrid.base) + foregroundRegions)
+      .sortedByDescending { it.bounds.contains(transformation.centroid) }
+      .fastMapNotNull { region ->
+        val isBaseTile = region == tileGrid.base
+        val drawBounds = region.bounds.scaledAndOffsetBy(transformation.scale, transformation.offset)
+        ViewportTile(
+          region = region,
+          bounds = drawBounds,
+          isBase = isBaseTile,
+          isVisible = drawBounds.overlaps(viewportSize!!),
+        )
+      }
+      .toImmutableList()
   }
 
   internal val viewportImageTiles: ImmutableList<ViewportImageTile> by derivedStateOf {

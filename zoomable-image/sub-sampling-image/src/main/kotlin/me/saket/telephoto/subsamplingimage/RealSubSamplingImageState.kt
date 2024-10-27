@@ -28,7 +28,6 @@ import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
 import me.saket.telephoto.subsamplingimage.internal.ViewportTile
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.contains
-import me.saket.telephoto.subsamplingimage.internal.fastFilter
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.isNotEmpty
@@ -37,7 +36,7 @@ import me.saket.telephoto.subsamplingimage.internal.overlaps
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 
-/** State for [SubSamplingImage]. */
+/** State for [SubSamplingImage]. Created using [rememberSubSamplingImageState]. */
 @Stable
 internal class RealSubSamplingImageState(
   private val imageSource: SubSamplingImageSource,
@@ -65,6 +64,8 @@ internal class RealSubSamplingImageState(
   internal var imageRegionDecoder: ImageRegionDecoder? by mutableStateOf(null)
   internal var canvasSize: IntSize? by mutableStateOf(null)
   internal var showTileBounds = false  // Only used by tests.
+
+  private var loadedImages: ImmutableMap<ImageRegionTile, Painter> by mutableStateOf(persistentMapOf())
 
   private val isReadyToBeDisplayed: Boolean by derivedStateOf {
     val canvasSize = canvasSize
@@ -119,19 +120,15 @@ internal class RealSubSamplingImageState(
     }
   }
 
-  private var tileImages: ImmutableMap<ImageRegionTile, Painter> by mutableStateOf(persistentMapOf())
-
   internal val viewportImageTiles: ImmutableList<ViewportImageTile> by derivedStateOf {
-    viewportTiles
-      .fastFilter { it.isVisible }
-      .fastMapNotNull { tile ->
-        val painter = tileImages[tile.region] ?: if (tile.isBase) imageSource.preview?.let(::BitmapPainter) else null
+    viewportTiles.fastMapNotNull { tile ->
+      if (tile.isVisible) {
         ViewportImageTile(
           tile = tile,
-          painter = painter,
+          painter = loadedImages[tile.region] ?: if (tile.isBase) imageSource.previewPainter() else null,
         )
-      }
-      .toImmutableList()
+      } else null
+    }.toImmutableList()
   }
 
   @Composable
@@ -152,8 +149,12 @@ internal class RealSubSamplingImageState(
     }
     LaunchedEffect(imageCache) {
       imageCache.observeCachedImages().collect {
-        tileImages = it
+        loadedImages = it
       }
     }
   }
+}
+
+private fun SubSamplingImageSource.previewPainter(): Painter? {
+  return preview?.let(::BitmapPainter)
 }

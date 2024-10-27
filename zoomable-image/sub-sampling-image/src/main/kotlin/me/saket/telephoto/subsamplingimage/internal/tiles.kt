@@ -8,7 +8,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntRect
 
-/** A region in the source image that will be drawn in a [ViewportImageTile]. */
+/** A region in the source image that will be drawn in a [ViewportTile]. */
 @Immutable
 internal data class ImageRegionTile(
   val sampleSize: ImageSampleSize,

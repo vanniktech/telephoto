@@ -69,7 +69,7 @@ interface ZoomableContentTransformation {
 
   /**
    * Central point around which the last pan/zoom gesture was made with respect to the
-   * layout bounds. Will be unspecified if the content hasn't been interacted with yet.
+   * layout bounds. Will be `null` if the content hasn't been interacted with yet.
    */
   val centroid: Offset?
 

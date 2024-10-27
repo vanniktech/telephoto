@@ -28,8 +28,8 @@ internal class BitmapCache(
   private val decoder: ImageRegionDecoder,
   private val throttleEvery: Duration = 100.milliseconds,
 ) {
-  private val activeTiles = Channel<List<BitmapRegionTile>>(capacity = 10)
-  private val cachedBitmaps = MutableStateFlow(emptyMap<BitmapRegionTile, LoadingState>())
+  private val activeTiles = Channel<List<ImageRegionTile>>(capacity = 10)
+  private val cachedBitmaps = MutableStateFlow(emptyMap<ImageRegionTile, LoadingState>())
 
   private sealed interface LoadingState {
     data class Loaded(val bitmap: ImageBitmap) : LoadingState
@@ -82,7 +82,7 @@ internal class BitmapCache(
     }.distinctUntilChanged()
   }
 
-  fun loadOrUnloadForTiles(tiles: List<BitmapRegionTile>) {
+  fun loadOrUnloadForTiles(tiles: List<ImageRegionTile>) {
     activeTiles.trySend(tiles)
   }
 

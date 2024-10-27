@@ -9,9 +9,7 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import assertk.assertThat
-import assertk.assertions.contains
 import assertk.assertions.containsExactly
-import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
@@ -51,8 +49,8 @@ class BitmapCacheTest {
       val cachedBitmaps = cache.cachedBitmaps().testIn(this)
       assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
-      val tile1 = fakeBitmapRegionTile(4)
-      val tile2 = fakeBitmapRegionTile(4)
+      val tile1 = fakeImageRegionTile(4)
+      val tile2 = fakeImageRegionTile(4)
 
       cache.loadOrUnloadForTiles(listOf(tile1, tile2))
       decoder.decodedBitmaps.send(FakeImageBitmap())
@@ -63,7 +61,7 @@ class BitmapCacheTest {
       cachedBitmaps.skipItems(1)
       assertThat(cachedBitmaps.awaitItem().keys.toList()).containsExactly(tile1, tile2)
 
-      val tile3 = fakeBitmapRegionTile(4)
+      val tile3 = fakeImageRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
@@ -79,8 +77,8 @@ class BitmapCacheTest {
     val cache = bitmapCache(2.seconds)
 
     cache.cachedBitmaps().drop(1).test {
-      val tile1 = fakeBitmapRegionTile(4)
-      val tile2 = fakeBitmapRegionTile(4)
+      val tile1 = fakeImageRegionTile(4)
+      val tile2 = fakeImageRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2))
       decoder.decodedBitmaps.send(FakeImageBitmap())
       decoder.decodedBitmaps.send(FakeImageBitmap())
@@ -88,7 +86,7 @@ class BitmapCacheTest {
       skipItems(1)
       assertThat(awaitItem().keys.toList()).containsExactly(tile1, tile2)
 
-      val tile3 = fakeBitmapRegionTile(4)
+      val tile3 = fakeImageRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile3))
       decoder.decodedBitmaps.send(FakeImageBitmap())
 
@@ -106,7 +104,7 @@ class BitmapCacheTest {
         val requestedRegions = decoder.requestedRegions.testIn(this)
         val cachedBitmaps = cache.cachedBitmaps().drop(1).testIn(this)
 
-        val visibleTile = fakeBitmapRegionTile(4)
+        val visibleTile = fakeImageRegionTile(4)
         cache.loadOrUnloadForTiles(listOf(visibleTile))
         assertThat(requestedRegions.awaitItem()).isEqualTo(visibleTile)
         cachedBitmaps.expectNoEvents()
@@ -133,10 +131,10 @@ class BitmapCacheTest {
     )
 
     decoder.requestedRegions.test {
-      val baseTile = fakeBitmapRegionTile(sampleSize = 4)
-      val tile2 = fakeBitmapRegionTile(sampleSize = 1)
-      val tile3 = fakeBitmapRegionTile(sampleSize = 1)
-      val tileToSkip = fakeBitmapRegionTile(sampleSize = 8)
+      val baseTile = fakeImageRegionTile(sampleSize = 4)
+      val tile2 = fakeImageRegionTile(sampleSize = 1)
+      val tile3 = fakeImageRegionTile(sampleSize = 1)
+      val tileToSkip = fakeImageRegionTile(sampleSize = 8)
 
       cache.loadOrUnloadForTiles(listOf(baseTile))
 
@@ -159,13 +157,13 @@ class BitmapCacheTest {
     }
   }
 
-  private fun fakeBitmapRegionTile(
+  private fun fakeImageRegionTile(
     sampleSize: Int = Random.nextInt(from = 0, until = 10) * 2,
-  ): BitmapRegionTile {
+  ): ImageRegionTile {
     val random = Random(seed = System.nanoTime())
-    return BitmapRegionTile(
+    return ImageRegionTile(
       sampleSize = BitmapSampleSize(sampleSize),
-      bounds = IntRect(random.nextInt(), random.nextInt(), random.nextInt(), random.nextInt())
+      bounds = IntRect(random.nextInt(), random.nextInt(), random.nextInt(), random.nextInt()),
     )
   }
 }

@@ -24,6 +24,7 @@ dependencies {
   implementation(libs.androidx.ktx.core)
   implementation(libs.androidx.exif)
   implementation(libs.androidx.tracing)
+  implementation(libs.kotlinx.immutableCollections)
 
   testImplementation(libs.junit)
   testImplementation(libs.assertk)

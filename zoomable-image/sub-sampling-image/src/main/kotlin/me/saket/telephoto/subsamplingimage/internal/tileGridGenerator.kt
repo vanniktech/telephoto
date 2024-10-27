@@ -10,7 +10,7 @@ internal fun ImageRegionTileGrid.Companion.generate(
   unscaledImageSize: IntSize,
   minTileSize: IntSize = canvasSize / 2,
 ): ImageRegionTileGrid {
-  val baseSampleSize = BitmapSampleSize.calculateFor(
+  val baseSampleSize = ImageSampleSize.calculateFor(
     canvasSize = canvasSize,
     scaledImageSize = unscaledImageSize
   )
@@ -64,11 +64,11 @@ internal fun ImageRegionTileGrid.Companion.generate(
   )
 }
 
-/** Calculates a [BitmapSampleSize] for fitting a source image in its layout bounds. */
-internal fun BitmapSampleSize.Companion.calculateFor(
+/** Calculates a [ImageSampleSize] for fitting a source image in its layout bounds. */
+internal fun ImageSampleSize.Companion.calculateFor(
   canvasSize: IntSize,
   scaledImageSize: IntSize
-): BitmapSampleSize {
+): ImageSampleSize {
   check(canvasSize.minDimension > 0f) { "Can't calculate a sample size for $canvasSize" }
 
   val zoom = minOf(
@@ -78,10 +78,10 @@ internal fun BitmapSampleSize.Companion.calculateFor(
   return calculateFor(zoom)
 }
 
-/** Calculates a [BitmapSampleSize] for fitting a source image in its layout bounds. */
-internal fun BitmapSampleSize.Companion.calculateFor(zoom: Float): BitmapSampleSize {
+/** Calculates a [ImageSampleSize] for fitting a source image in its layout bounds. */
+internal fun ImageSampleSize.Companion.calculateFor(zoom: Float): ImageSampleSize {
   if (zoom == 0f) {
-    return BitmapSampleSize(1)
+    return ImageSampleSize(1)
   }
 
   var sampleSize = 1
@@ -89,8 +89,8 @@ internal fun BitmapSampleSize.Companion.calculateFor(zoom: Float): BitmapSampleS
     // BitmapRegionDecoder requires values based on powers of 2.
     sampleSize *= 2
   }
-  return BitmapSampleSize(sampleSize)
+  return ImageSampleSize(sampleSize)
 }
 
-private operator fun BitmapSampleSize.div(other: BitmapSampleSize) = BitmapSampleSize(size / other.size)
-private operator fun BitmapSampleSize.div(other: Int) = BitmapSampleSize(size / other)
+private operator fun ImageSampleSize.div(other: ImageSampleSize) = ImageSampleSize(size / other.size)
+private operator fun ImageSampleSize.div(other: Int) = ImageSampleSize(size / other)

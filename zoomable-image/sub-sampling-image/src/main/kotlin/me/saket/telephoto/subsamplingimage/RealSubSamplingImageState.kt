@@ -19,7 +19,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
 import me.saket.telephoto.subsamplingimage.internal.BitmapCache
-import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
+import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionTileGrid
@@ -96,7 +96,7 @@ internal class RealSubSamplingImageState(
       val transformation = contentTransformation()
       val baseSampleSize = tileGrid.base.sampleSize
 
-      val currentSampleSize = BitmapSampleSize
+      val currentSampleSize = ImageSampleSize
         .calculateFor(zoom = transformation.scale.maxScale)
         .coerceAtMost(baseSampleSize)
 

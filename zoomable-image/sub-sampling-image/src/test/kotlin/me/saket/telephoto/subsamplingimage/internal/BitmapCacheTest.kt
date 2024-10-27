@@ -162,7 +162,7 @@ class BitmapCacheTest {
   ): ImageRegionTile {
     val random = Random(seed = System.nanoTime())
     return ImageRegionTile(
-      sampleSize = BitmapSampleSize(sampleSize),
+      sampleSize = ImageSampleSize(sampleSize),
       bounds = IntRect(random.nextInt(), random.nextInt(), random.nextInt(), random.nextInt()),
     )
   }

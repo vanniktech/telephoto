@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.IntRect
 /** A region in the source image that will be drawn in a [ViewportImageTile]. */
 @Immutable
 internal data class ImageRegionTile(
-  val sampleSize: BitmapSampleSize,
+  val sampleSize: ImageSampleSize,
   val bounds: IntRect,
 )
 
@@ -54,7 +54,7 @@ internal data class ViewportImageTile(
 
 /** See [BitmapFactory.Options.inSampleSize]. */
 @JvmInline
-internal value class BitmapSampleSize(val size: Int) {
+internal value class ImageSampleSize(val size: Int) {
   companion object; // For extensions.
 
   init {
@@ -63,7 +63,7 @@ internal value class BitmapSampleSize(val size: Int) {
     }
   }
 
-  fun coerceAtMost(other: BitmapSampleSize): BitmapSampleSize {
+  fun coerceAtMost(other: ImageSampleSize): ImageSampleSize {
     return if (size > other.size) other else this
   }
 }
@@ -71,7 +71,7 @@ internal value class BitmapSampleSize(val size: Int) {
 /** Collection of [ImageRegionTile] needed for drawing an image at a certain zoom level. */
 internal data class ImageRegionTileGrid(
   val base: ImageRegionTile,
-  val foreground: Map<BitmapSampleSize, List<ImageRegionTile>>
+  val foreground: Map<ImageSampleSize, List<ImageRegionTile>>
 ) {
   companion object; // For extensions.
 }

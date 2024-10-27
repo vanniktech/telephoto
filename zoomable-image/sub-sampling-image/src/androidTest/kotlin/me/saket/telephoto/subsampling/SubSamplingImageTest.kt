@@ -50,7 +50,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
+import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
@@ -264,7 +264,7 @@ class SubSamplingImageTest {
 
     // This fake factory will ignore decoding of selected tiles.
     val shouldIgnore: (ImageRegionTile) -> Boolean = { region ->
-      region.sampleSize == BitmapSampleSize(1) && region.bounds.left == 3648
+      region.sampleSize == ImageSampleSize(1) && region.bounds.left == 3648
     }
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)

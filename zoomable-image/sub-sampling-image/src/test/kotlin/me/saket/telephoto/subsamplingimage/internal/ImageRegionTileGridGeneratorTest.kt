@@ -19,7 +19,7 @@ import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
-class ImageRegionTileGridGeneratorTest {
+class ImageTileGridGeneratorTest {
 
   @Test fun `empty canvas size`() {
     assertFailure {
@@ -42,7 +42,7 @@ class ImageRegionTileGridGeneratorTest {
       )
     )
 
-    assertThat(tileGrid.base.sampleSize).isEqualTo(BitmapSampleSize(1))
+    assertThat(tileGrid.base.sampleSize).isEqualTo(ImageSampleSize(1))
     assertThat(tileGrid.foreground).isEmpty()
   }
 
@@ -58,7 +58,7 @@ class ImageRegionTileGridGeneratorTest {
 
     // On telephoto 0.4.0 and lower versions, the sample size for
     // a 4k image displayed in a 1080p layout was calculated as 1.
-    assertThat(tileGrid.base.sampleSize).isEqualTo(BitmapSampleSize(2))
+    assertThat(tileGrid.base.sampleSize).isEqualTo(ImageSampleSize(2))
     assertThat(tileGrid.foreground).isNotEmpty()
   }
 
@@ -102,7 +102,7 @@ class ImageRegionTileGridGeneratorTest {
       assertThat(tiles.sumOf { it.bounds.area }, name).isEqualTo(imageSize.area)
 
       // Verify that the tiles don't have any overlap.
-      val overlappingTiles: List<ImageRegionTile> = tiles.flatMap { tile ->
+      val overlappingTiles: List<ImageTile> = tiles.flatMap { tile ->
         tiles.minus(tile).filter { other ->
           tile.bounds.overlaps(other.bounds)
         }
@@ -159,10 +159,10 @@ class ImageRegionTileGridGeneratorTest {
     )
 
     assertThat(grid.foreground.mapValues { (_, tiles) -> tiles.size }).containsOnly(
-      BitmapSampleSize(8) to 2,
-      BitmapSampleSize(4) to 4,
-      BitmapSampleSize(2) to 8,
-      BitmapSampleSize(1) to 16,
+      ImageSampleSize(8) to 2,
+      ImageSampleSize(4) to 4,
+      ImageSampleSize(2) to 8,
+      ImageSampleSize(1) to 16,
     )
   }
 
@@ -175,9 +175,9 @@ class ImageRegionTileGridGeneratorTest {
     )
 
     assertThat(grid.foreground.mapValues { (_, tiles) -> tiles.size }).containsOnly(
-      BitmapSampleSize(4) to 2,
-      BitmapSampleSize(2) to 4,
-      BitmapSampleSize(1) to 8,
+      ImageSampleSize(4) to 2,
+      ImageSampleSize(2) to 4,
+      ImageSampleSize(1) to 8,
     )
   }
 }

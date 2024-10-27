@@ -50,12 +50,12 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
 import me.saket.telephoto.subsamplingimage.internal.BitmapSampleSize
-import me.saket.telephoto.subsamplingimage.internal.CanvasRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
+import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.util.CiScreenshotValidator
@@ -178,8 +178,7 @@ class SubSamplingImageTest {
     @TestParameter alignment: AlignmentParam,
     @TestParameter size: LayoutSizeParam,
   ) {
-    var isImageDisplayed = false
-    var tiles: List<CanvasRegionTile> = emptyList()
+    lateinit var imageState: RealSubSamplingImageState
 
     rule.setContent {
       val zoomableState = rememberZoomableState(
@@ -187,16 +186,10 @@ class SubSamplingImageTest {
       ).also {
         it.contentAlignment = alignment.value
       }
-      val imageState = rememberSubSamplingImageState(
+      imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
         imageSource = SubSamplingImageSource.asset("pahade.jpg"),
       ).asReal()
-      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-        isImageDisplayed = imageState.isImageLoadedInFullQuality
-      }
-      LaunchedEffect(imageState.tiles) {
-        tiles = imageState.tiles
-      }
 
       SubSamplingImage(
         modifier = Modifier
@@ -208,7 +201,7 @@ class SubSamplingImageTest {
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { imageState.isImageLoadedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -216,10 +209,9 @@ class SubSamplingImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick()
     }
-    rule.runOnIdle {
-      // Wait for full-resolution tiles to load.
-      rule.waitUntil(5.seconds) { tiles.all { it.bitmap != null } }
-    }
+
+    // Wait for full-resolution tiles to load.
+    rule.waitUntil(5.seconds) { imageState.isImageLoadedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed")
     }
@@ -288,7 +280,7 @@ class SubSamplingImageTest {
       }
     }
 
-    var imageTiles: List<CanvasRegionTile>? = null
+    var imageTiles: List<ViewportImageTile> = emptyList()
 
     rule.setContent {
       BoxWithConstraints {
@@ -306,10 +298,9 @@ class SubSamplingImageTest {
             imageSource = SubSamplingImageSource.asset("pahade.jpg"),
           ).asReal().also {
             it.showTileBounds = true
+            imageTiles = it.viewportImageTiles
           }
-          LaunchedEffect(imageState.tiles) {
-            imageTiles = imageState.tiles
-          }
+
           SubSamplingImage(
             modifier = Modifier
               .fillMaxSize()
@@ -323,7 +314,7 @@ class SubSamplingImageTest {
     }
 
     rule.waitUntil(5.seconds) {
-      imageTiles!!.count { !it.isBaseTile && it.bitmap != null } == 2
+      imageTiles.count { !it.isBase && it.painter != null } == 2
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
@@ -358,7 +349,7 @@ class SubSamplingImageTest {
       }
     }
 
-    var imageTiles: List<CanvasRegionTile>? = null
+    var imageTiles: List<ViewportImageTile> = emptyList()
     rule.setContent {
       CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
         val zoomableState = rememberZoomableState()
@@ -367,9 +358,7 @@ class SubSamplingImageTest {
           imageSource = SubSamplingImageSource.asset("pahade.jpg"),
         ).asReal().also {
           it.showTileBounds = true
-        }
-        LaunchedEffect(imageState.tiles) {
-          imageTiles = imageState.tiles
+          imageTiles = it.viewportImageTiles
         }
         SubSamplingImage(
           modifier = Modifier
@@ -387,7 +376,7 @@ class SubSamplingImageTest {
     }
     rule.runOnIdle {
       rule.waitUntil(5.seconds) {
-        imageTiles!!.count { !it.isBaseTile && it.bitmap != null } == 1
+        imageTiles.count { !it.isBase && it.painter != null } == 1
       }
     }
     rule.runOnIdle {
@@ -399,7 +388,7 @@ class SubSamplingImageTest {
     screenshotValidator.tolerancePercentOnCi = 0.014f
 
     var isImageDisplayed = false
-    var imageTiles: List<CanvasRegionTile>? = null
+    var imageTiles: List<ViewportImageTile> = emptyList()
 
     rule.setContent {
       BoxWithConstraints {
@@ -409,25 +398,23 @@ class SubSamplingImageTest {
 
         val imageState = rememberSubSamplingImageState(
           imageSource = SubSamplingImageSource.asset("path.jpg"),
-          transformation = RealZoomableContentTransformation(
-            isSpecified = true,
-            contentSize = Size.Unspecified,
-            scale = ScaleFactor(scaleX = 0.5949996f, scaleY = 0.5949996f),
-            scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
-              initialScale = ScaleFactor.Unspecified,
-              userZoom = 0f,
-            ),
-            rotationZ = 0f,
-            offset = Offset(x = -1041.2019f, y = -10.483643f),
-            centroid = Offset.Zero,
-          ),
+          transformation = {
+            RealZoomableContentTransformation(
+              isSpecified = true,
+              contentSize = Size.Unspecified,
+              scale = ScaleFactor(scaleX = 0.5949996f, scaleY = 0.5949996f),
+              scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
+                initialScale = ScaleFactor.Unspecified,
+                userZoom = 0f,
+              ),
+              rotationZ = 0f,
+              offset = Offset(x = -1041.2019f, y = -10.483643f),
+              centroid = Offset.Zero,
+            )
+          },
         ).asReal()
-        LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-          isImageDisplayed = imageState.isImageLoadedInFullQuality
-        }
-        LaunchedEffect(imageState.tiles) {
-          imageTiles = imageState.tiles
-        }
+        isImageDisplayed = imageState.isImageLoadedInFullQuality
+        imageTiles = imageState.viewportImageTiles
 
         SubSamplingImage(
           modifier = Modifier.fillMaxSize(),
@@ -441,7 +428,7 @@ class SubSamplingImageTest {
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
 
-      assertThat(imageTiles!!.map { it.bounds }).containsExactly(
+      assertThat(imageTiles.map { it.bounds }).containsExactly(
         IntRect(-224, -10, 592, 703),
         IntRect(-224, 703, 592, 1417),
         IntRect(-224, 1417, 592, 2169),
@@ -642,6 +629,10 @@ class SubSamplingImageTest {
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_full_quality")
     }
+  }
+
+  @Test fun do_not_draw_any_tiles_until_all_of_the_visible_portion_of_the_image_can_be_shown() {
+    TODO()
   }
 
   @Suppress("unused")

@@ -2,6 +2,8 @@ package me.saket.telephoto.subsamplingimage.internal
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.util.fastForEach
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -70,7 +72,7 @@ internal class BitmapCache(
     }
   }
 
-  fun cachedBitmaps(): Flow<Map<BitmapRegionTile, ImageBitmap>> {
+  fun cachedBitmaps(): Flow<ImmutableMap<ImageRegionTile, ImageBitmap>> {
     return cachedBitmaps.map { map ->
       buildMap(capacity = map.size) {
         map.forEach { (region, state) ->
@@ -78,7 +80,7 @@ internal class BitmapCache(
             put(region, state.bitmap)
           }
         }
-      }
+      }.toImmutableMap()
     }.distinctUntilChanged()
   }
 

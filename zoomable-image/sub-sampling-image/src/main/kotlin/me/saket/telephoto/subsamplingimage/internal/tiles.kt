@@ -5,25 +5,28 @@ package me.saket.telephoto.subsamplingimage.internal
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntRect
 
-/** Represents a region in the source image that will be drawn in a [ViewportTile]. */
+/** A region in the source image that will be drawn in a [ViewportImageTile]. */
 @Immutable
 internal data class ImageRegionTile(
   val sampleSize: BitmapSampleSize,
   val bounds: IntRect,
 )
 
-/** Represents a region on the Canvas where a [ImageRegionTile] image can be drawn. */
+/** A region in the viewport/canvas where a [ImageRegionTile] image will be drawn. */
 internal data class ViewportTile private constructor(
   val region: ImageRegionTile,
   val bounds: IntRect,
   val isVisible: Boolean,
+  val isBase: Boolean,
 ) {
   constructor(
     region: ImageRegionTile,
     bounds: Rect,
     isVisible: Boolean,
+    isBase: Boolean,
   ) : this(
     region = region,
     // Because the Canvas APIs only accept integer values, any fractional values
@@ -36,7 +39,17 @@ internal data class ViewportTile private constructor(
     // this minor loss of precision.
     bounds = bounds.discardFractionalValues(),
     isVisible = isVisible,
+    isBase = isBase,
   )
+}
+
+@Immutable
+internal data class ViewportImageTile(
+  val tile: ViewportTile,
+  val painter: Painter?,
+) {
+  val bounds get() = tile.bounds
+  val isBase get() = tile.isBase
 }
 
 /** See [BitmapFactory.Options.inSampleSize]. */

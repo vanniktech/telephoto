@@ -25,6 +25,10 @@ internal fun IntSize.coerceAtLeast(min: IntSize): IntSize {
   )
 }
 
+internal fun IntSize.isNotEmpty(): Boolean {
+  return width > 0 && height > 0
+}
+
 internal fun Size.discardFractionalParts(): IntSize {
   return IntSize(width = width.toInt(), height = height.toInt())
 }

@@ -39,7 +39,7 @@ import me.saket.telephoto.zoomable.ZoomableContentTransformation
 /** State for [SubSamplingImage]. Created using [rememberSubSamplingImageState]. */
 @Stable
 internal class RealSubSamplingImageState(
-  private val imageSource: SubSamplingImageSource,
+  imageSource: SubSamplingImageSource,
   private val contentTransformation: () -> ZoomableContentTransformation,
 ) : SubSamplingImageState {
 
@@ -49,13 +49,13 @@ internal class RealSubSamplingImageState(
   private val imagePreview: Painter? =
     imageSource.preview?.let(::BitmapPainter)
 
-  override val isImageLoaded: Boolean by derivedStateOf {
+  override val isImageDisplayed: Boolean by derivedStateOf {
     isReadyToBeDisplayed && viewportImageTiles.isNotEmpty() &&
       (viewportImageTiles.fastAny { it.tile.isBase } || viewportImageTiles.fastAll { it.painter != null })
   }
 
-  override val isImageLoadedInFullQuality: Boolean by derivedStateOf {
-    isImageLoaded && viewportImageTiles.fastAll { it.painter != null }
+  override val isImageDisplayedInFullQuality: Boolean by derivedStateOf {
+    isImageDisplayed && viewportImageTiles.fastAll { it.painter != null }
   }
 
   internal var imageRegionDecoder: ImageRegionDecoder? by mutableStateOf(null)

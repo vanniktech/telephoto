@@ -9,7 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
@@ -18,12 +19,11 @@ import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
-import me.saket.telephoto.subsamplingimage.internal.BitmapCache
-import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
+import me.saket.telephoto.subsamplingimage.internal.ImageCache
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionTileGrid
-import me.saket.telephoto.subsamplingimage.internal.RotatedBitmapPainter
+import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
 import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
 import me.saket.telephoto.subsamplingimage.internal.ViewportTile
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
@@ -119,16 +119,16 @@ internal class RealSubSamplingImageState(
     }
   }
 
-  private var tileImages: ImmutableMap<ImageRegionTile, ImageBitmap> by mutableStateOf(persistentMapOf())
+  private var tileImages: ImmutableMap<ImageRegionTile, Painter> by mutableStateOf(persistentMapOf())
 
   internal val viewportImageTiles: ImmutableList<ViewportImageTile> by derivedStateOf {
     viewportTiles
       .fastFilter { it.isVisible }
       .fastMapNotNull { tile ->
-        val image = tileImages[tile.region] ?: if (tile.isBase) imageSource.preview else null
+        val painter = tileImages[tile.region] ?: if (tile.isBase) imageSource.preview?.let(::BitmapPainter) else null
         ViewportImageTile(
           tile = tile,
-          painter = image?.let(::RotatedBitmapPainter),
+          painter = painter,
         )
       }
       .toImmutableList()
@@ -141,17 +141,17 @@ internal class RealSubSamplingImageState(
     }
 
     val scope = rememberCoroutineScope()
-    val bitmapCache = remember(this) {
-      BitmapCache(scope, imageRegionDecoder!!)
+    val imageCache = remember(this) {
+      ImageCache(scope, imageRegionDecoder!!)
     }
 
-    LaunchedEffect(bitmapCache, viewportTiles) {
-      bitmapCache.loadOrUnloadForTiles(
+    LaunchedEffect(imageCache, viewportTiles) {
+      imageCache.loadOrUnloadForTiles(
         regions = viewportTiles.fastMapNotNull { if (it.isVisible) it.region else null }
       )
     }
-    LaunchedEffect(bitmapCache) {
-      bitmapCache.observeCachedBitmaps().collect {
+    LaunchedEffect(imageCache) {
+      imageCache.observeCachedImages().collect {
         tileImages = it
       }
     }

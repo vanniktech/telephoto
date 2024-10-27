@@ -22,8 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
@@ -269,7 +269,7 @@ class SubSamplingImageTest {
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
+        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
           return if (shouldIgnore(region)) {
             delay(Long.MAX_VALUE)
             error("shouldn't reach here")
@@ -332,7 +332,7 @@ class SubSamplingImageTest {
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
+        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
           val isBaseTile = region.sampleSize.size == 8
           return if (isBaseTile || !firstNonBaseTileReceived.getAndSet(true)) {
             if (!isBaseTile) {
@@ -588,7 +588,7 @@ class SubSamplingImageTest {
     val gatedDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
+        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
           return previewBitmapMutex.withLock {
             real.decodeRegion(region)
           }

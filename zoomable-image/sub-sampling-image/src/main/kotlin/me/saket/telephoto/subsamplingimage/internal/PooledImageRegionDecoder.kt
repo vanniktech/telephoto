@@ -3,7 +3,7 @@ package me.saket.telephoto.subsamplingimage.internal
 import android.app.ActivityManager
 import android.graphics.BitmapRegionDecoder
 import androidx.annotation.VisibleForTesting
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.getSystemService
 import kotlinx.coroutines.channels.Channel
@@ -19,7 +19,7 @@ internal class PooledImageRegionDecoder private constructor(
   private val decoders: ResourcePool<ImageRegionDecoder>,
 ) : ImageRegionDecoder {
 
-  override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
+  override suspend fun decodeRegion(region: ImageRegionTile): Painter {
     return decoders.borrow { decoder ->
       decoder.decodeRegion(region)
     }

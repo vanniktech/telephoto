@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -16,7 +17,7 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 internal interface ImageRegionDecoder {
   val imageSize: IntSize
 
-  suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap
+  suspend fun decodeRegion(region: ImageRegionTile): Painter
 
   fun close()
 

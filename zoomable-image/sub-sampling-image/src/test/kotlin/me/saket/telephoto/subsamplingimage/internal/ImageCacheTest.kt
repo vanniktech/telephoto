@@ -1,8 +1,8 @@
 package me.saket.telephoto.subsamplingimage.internal
 
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageBitmapConfig
-import androidx.compose.ui.graphics.colorspace.ColorSpace
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import app.cash.turbine.ReceiveTurbine
@@ -31,12 +31,12 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class BitmapCacheTest {
+class ImageCacheTest {
   private val decoder = FakeImageRegionDecoder()
 
-  private fun TestScope.bitmapCache(
+  private fun TestScope.imageCache(
     throttleEvery: Duration = 100.milliseconds
-  ) = BitmapCache(
+  ) = ImageCache(
     scope = backgroundScope,
     decoder = decoder,
     throttleEvery = throttleEvery,
@@ -44,17 +44,17 @@ class BitmapCacheTest {
 
   @Test fun `when tiles are received, load bitmaps only for new tiles`() = runTest(timeout = 1.seconds) {
     turbineScope {
-      val cache = bitmapCache(2.seconds)
+      val cache = imageCache(2.seconds)
       val requestedRegions = decoder.requestedRegions.testIn(this)
-      val cachedBitmaps = cache.observeCachedBitmaps().testIn(this)
+      val cachedBitmaps = cache.observeCachedImages().testIn(this)
       assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
       val tile1 = fakeImageRegionTile(4)
       val tile2 = fakeImageRegionTile(4)
 
       cache.loadOrUnloadForTiles(listOf(tile1, tile2))
-      decoder.decodedBitmaps.send(FakeImageBitmap())
-      decoder.decodedBitmaps.send(FakeImageBitmap())
+      decoder.decodedRegions.send(fakePainter())
+      decoder.decodedRegions.send(fakePainter())
 
       assertThat(requestedRegions.awaitItem()).isEqualTo(tile1)
       assertThat(requestedRegions.awaitItem()).isEqualTo(tile2)
@@ -63,7 +63,7 @@ class BitmapCacheTest {
 
       val tile3 = fakeImageRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2, tile3))
-      decoder.decodedBitmaps.send(FakeImageBitmap())
+      decoder.decodedRegions.send(fakePainter())
 
       assertThat(requestedRegions.awaitItem()).isEqualTo(tile3)
       assertThat(cachedBitmaps.awaitItem().keys.toList()).containsExactly(tile1, tile2, tile3)
@@ -74,21 +74,21 @@ class BitmapCacheTest {
   }
 
   @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(timeout = 1.seconds) {
-    val cache = bitmapCache(2.seconds)
+    val cache = imageCache(2.seconds)
 
-    cache.observeCachedBitmaps().drop(1).test {
+    cache.observeCachedImages().drop(1).test {
       val tile1 = fakeImageRegionTile(4)
       val tile2 = fakeImageRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2))
-      decoder.decodedBitmaps.send(FakeImageBitmap())
-      decoder.decodedBitmaps.send(FakeImageBitmap())
+      decoder.decodedRegions.send(fakePainter())
+      decoder.decodedRegions.send(fakePainter())
 
       skipItems(1)
       assertThat(awaitItem().keys.toList()).containsExactly(tile1, tile2)
 
       val tile3 = fakeImageRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile3))
-      decoder.decodedBitmaps.send(FakeImageBitmap())
+      decoder.decodedRegions.send(fakePainter())
 
       skipItems(1)
       assertThat(awaitItem().keys.toList()).containsExactly(tile3)
@@ -100,9 +100,9 @@ class BitmapCacheTest {
   @Test fun `when a tile is removed before its bitmap could be loaded, cancel its in-flight load`() =
     runTest(timeout = 1.seconds) {
       turbineScope {
-        val cache = bitmapCache(2.seconds)
+        val cache = imageCache(2.seconds)
         val requestedRegions = decoder.requestedRegions.testIn(this)
-        val cachedBitmaps = cache.observeCachedBitmaps().drop(1).testIn(this)
+        val cachedBitmaps = cache.observeCachedImages().drop(1).testIn(this)
 
         val visibleTile = fakeImageRegionTile(4)
         cache.loadOrUnloadForTiles(listOf(visibleTile))
@@ -113,8 +113,8 @@ class BitmapCacheTest {
         requestedRegions.cancelAndExpectNoEvents()
         cachedBitmaps.cancelAndExpectNoEvents()
 
-        // Verify that BitmapCache has cancelled all loading jobs.
-        // I don't think it's possible to uniquely identify BitmapCache's loading jobs.
+        // Verify that ImageCache has cancelled all loading jobs.
+        // I don't think it's possible to uniquely identify ImageCache's loading jobs.
         // Checking that there aren't any active jobs should be sufficient for now.
         assertThat(coroutineContext.job.children.none { it.isActive }).isTrue()
       }
@@ -124,7 +124,7 @@ class BitmapCacheTest {
   // and also to work around https://github.com/cashapp/paparazzi/issues/1101.
   @Test fun `throttle load requests`() = runBlocking {
     val scope: CoroutineScope = this.plus(Job())
-    val cache = BitmapCache(
+    val cache = ImageCache(
       scope = scope,
       decoder = decoder,
       throttleEvery = 2.seconds,
@@ -171,34 +171,17 @@ class BitmapCacheTest {
 private class FakeImageRegionDecoder : ImageRegionDecoder {
   override val imageSize: IntSize get() = error("unused")
   val requestedRegions = MutableSharedFlow<ImageRegionTile>()
-  val decodedBitmaps = Channel<ImageBitmap>()
+  val decodedRegions = Channel<Painter>()
 
-  override suspend fun decodeRegion(region: ImageRegionTile): ImageBitmap {
+  override suspend fun decodeRegion(region: ImageRegionTile): Painter {
     requestedRegions.emit(region)
-    return decodedBitmaps.receive()
+    return decodedRegions.receive()
   }
 
   override fun close() = Unit
 }
 
-private class FakeImageBitmap : ImageBitmap {
-  override val colorSpace: ColorSpace get() = error("unused")
-  override val config: ImageBitmapConfig get() = error("unused")
-  override val hasAlpha: Boolean get() = error("unused")
-  override val height: Int get() = error("unused")
-  override val width: Int get() = error("unused")
-  override fun prepareToDraw() = Unit
-
-  override fun readPixels(
-    buffer: IntArray,
-    startX: Int,
-    startY: Int,
-    width: Int,
-    height: Int,
-    bufferOffset: Int,
-    stride: Int
-  ) = Unit
-}
+private fun fakePainter(): Painter = ColorPainter(Color.Black)
 
 private suspend fun <T> ReceiveTurbine<T>.cancelAndExpectNoEvents() {
   expectNoEvents()

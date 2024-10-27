@@ -46,7 +46,7 @@ class BitmapCacheTest {
     turbineScope {
       val cache = bitmapCache(2.seconds)
       val requestedRegions = decoder.requestedRegions.testIn(this)
-      val cachedBitmaps = cache.cachedBitmaps().testIn(this)
+      val cachedBitmaps = cache.observeCachedBitmaps().testIn(this)
       assertThat(cachedBitmaps.awaitItem()).isEmpty() // Default item.
 
       val tile1 = fakeImageRegionTile(4)
@@ -76,7 +76,7 @@ class BitmapCacheTest {
   @Test fun `when tiles are removed, discard their stale bitmaps from cache`() = runTest(timeout = 1.seconds) {
     val cache = bitmapCache(2.seconds)
 
-    cache.cachedBitmaps().drop(1).test {
+    cache.observeCachedBitmaps().drop(1).test {
       val tile1 = fakeImageRegionTile(4)
       val tile2 = fakeImageRegionTile(4)
       cache.loadOrUnloadForTiles(listOf(tile1, tile2))
@@ -102,7 +102,7 @@ class BitmapCacheTest {
       turbineScope {
         val cache = bitmapCache(2.seconds)
         val requestedRegions = decoder.requestedRegions.testIn(this)
-        val cachedBitmaps = cache.cachedBitmaps().drop(1).testIn(this)
+        val cachedBitmaps = cache.observeCachedBitmaps().drop(1).testIn(this)
 
         val visibleTile = fakeImageRegionTile(4)
         cache.loadOrUnloadForTiles(listOf(visibleTile))

@@ -147,11 +147,11 @@ internal class RealSubSamplingImageState(
 
     LaunchedEffect(bitmapCache, viewportTiles) {
       bitmapCache.loadOrUnloadForTiles(
-        tiles = viewportTiles.fastMapNotNull { if (it.isVisible) it.region else null }
+        regions = viewportTiles.fastMapNotNull { if (it.isVisible) it.region else null }
       )
     }
     LaunchedEffect(bitmapCache) {
-      bitmapCache.cachedBitmaps().collect {
+      bitmapCache.observeCachedBitmaps().collect {
         tileImages = it
       }
     }

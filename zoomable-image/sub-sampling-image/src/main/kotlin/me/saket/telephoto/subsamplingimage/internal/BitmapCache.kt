@@ -30,7 +30,7 @@ internal class BitmapCache(
   private val decoder: ImageRegionDecoder,
   private val throttleEvery: Duration = 100.milliseconds,
 ) {
-  private val activeTiles = Channel<List<ImageRegionTile>>(capacity = 10)
+  private val visibleRegions = Channel<List<ImageRegionTile>>(capacity = 10)
   private val cachedBitmaps = MutableStateFlow(emptyMap<ImageRegionTile, LoadingState>())
 
   private sealed interface LoadingState {
@@ -40,29 +40,29 @@ internal class BitmapCache(
 
   init {
     scope.launch {
-      activeTiles.consumeAsFlow()
+      visibleRegions.consumeAsFlow()
         .distinctUntilChanged()
         .throttleLatest(throttleEvery)  // In case the image is animating its zoom.
-        .collect { regions ->
-          val tilesToLoad = regions.fastFilter { it !in cachedBitmaps.value }
-          tilesToLoad.fastForEach { region ->
+        .collect { tiles ->
+          val tilesToLoad = tiles.fastFilter { it !in cachedBitmaps.value }
+          tilesToLoad.fastForEach { tile ->
             // CoroutineStart.UNDISPATCHED is used to ensure that the coroutines are executed
             // in the same order they were launched. Otherwise, the tiles may load in a different
             // order than what was requested. SubSamplingImageTest#draw_tile_under_centroid_first()
             // test will also become flaky.
             launch(start = CoroutineStart.UNDISPATCHED) {
               cachedBitmaps.update {
-                check(region !in it)
-                it + (region to InFlight(currentCoroutineContext().job))
+                check(tile !in it)
+                it + (tile to InFlight(currentCoroutineContext().job))
               }
-              val bitmap = decoder.decodeRegion(region)
+              val bitmap = decoder.decodeRegion(tile)
               cachedBitmaps.update {
-                it + (region to Loaded(bitmap))
+                it + (tile to Loaded(bitmap))
               }
             }
           }
 
-          val tilesToUnload = cachedBitmaps.value.keys.filter { it !in regions }
+          val tilesToUnload = cachedBitmaps.value.keys.filter { it !in tiles }
           tilesToUnload.fastForEach { region ->
             val inFlight = cachedBitmaps.value[region] as? InFlight
             inFlight?.job?.cancel()
@@ -72,7 +72,7 @@ internal class BitmapCache(
     }
   }
 
-  fun cachedBitmaps(): Flow<ImmutableMap<ImageRegionTile, ImageBitmap>> {
+  fun observeCachedBitmaps(): Flow<ImmutableMap<ImageRegionTile, ImageBitmap>> {
     return cachedBitmaps.map { map ->
       buildMap(capacity = map.size) {
         map.forEach { (region, state) ->
@@ -84,8 +84,8 @@ internal class BitmapCache(
     }.distinctUntilChanged()
   }
 
-  fun loadOrUnloadForTiles(tiles: List<ImageRegionTile>) {
-    activeTiles.trySend(tiles)
+  fun loadOrUnloadForTiles(regions: List<ImageRegionTile>) {
+    visibleRegions.trySend(regions)
   }
 
   // Copied from https://github.com/Kotlin/kotlinx.coroutines/issues/1446#issuecomment-1198103541.

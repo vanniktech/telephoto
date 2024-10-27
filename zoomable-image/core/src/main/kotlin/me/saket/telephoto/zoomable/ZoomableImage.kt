@@ -10,7 +10,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -99,7 +98,7 @@ fun ZoomableImage(
   ) {
     state.isImageDisplayed = when (resolved.delegate) {
       is ZoomableImageSource.PainterDelegate -> resolved.delegate.painter != null
-      is ZoomableImageSource.SubSamplingDelegate -> state.subSamplingState?.isImageLoaded ?: false
+      is ZoomableImageSource.SubSamplingDelegate -> state.subSamplingState?.isImageDisplayed ?: false
       else -> false
     }
 

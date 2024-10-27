@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
 import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
-import me.saket.telephoto.subsamplingimage.internal.ViewportTile
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
 /**
@@ -50,7 +49,7 @@ fun SubSamplingImage(
   check(state is RealSubSamplingImageState)
 
   val onDraw: DrawScope.() -> Unit = {
-    if (state.isImageLoaded) {
+    if (state.isImageDisplayed) {
       state.viewportImageTiles.fastForEach { tile ->
         drawImageTile(
           tile = tile,

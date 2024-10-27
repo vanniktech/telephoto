@@ -23,17 +23,21 @@ class ZoomableImageState internal constructor(
   val zoomableState: ZoomableState
 ) {
   /**
-   * Whether the full quality image is loaded. This be false for
-   * placeholders/thumbnails, where [isPlaceholderDisplayed] can be used instead.
+   * Whether the image is loaded and displayed (not necessarily in its full quality).
+   * This be false for placeholders/thumbnails, where [isPlaceholderDisplayed] can be used instead.
    */
   var isImageDisplayed: Boolean by mutableStateOf(false)
     internal set
 
+  /**
+   * Whether a preview of the image is displayed, during
+   * which zoom & pan interactions will remain disabled.
+   */
   var isPlaceholderDisplayed: Boolean by mutableStateOf(false)
     internal set
 
   /**
-   * Available when the image was lazy-loaded using
+   * Available only when the image was lazy-loaded using
    * [SubSamplingImage()][me.saket.telephoto.subsamplingimage.SubSamplingImage].
    */
   internal var subSamplingState: SubSamplingImageState? by mutableStateOf(null)

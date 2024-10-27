@@ -142,12 +142,18 @@ sealed interface SubSamplingImageState {
   val imageSize: IntSize?
 
   /**
-   * Whether the image is loaded and displayed (not necessarily in its full quality).
+   * Whether the image is loaded and displayed, but not necessarily in its full quality.
    *
-   * Also see [isImageLoadedInFullQuality].
+   * Also see [isImageDisplayedInFullQuality].
    */
-  val isImageLoaded: Boolean
+  val isImageDisplayed: Boolean
 
   /** Whether the image is loaded and displayed in its full quality. */
-  val isImageLoadedInFullQuality: Boolean
+  val isImageDisplayedInFullQuality: Boolean
+
+  @Deprecated("Use isImageDisplayed instead", ReplaceWith("isImageDisplayed"))
+  val isImageLoaded: Boolean get() = isImageDisplayed
+
+  @Deprecated("Renamed to isImageDisplayedInFullQuality", ReplaceWith("isImageDisplayedInFullQuality"))
+  val isImageLoadedInFullQuality: Boolean get() = isImageDisplayedInFullQuality
 }

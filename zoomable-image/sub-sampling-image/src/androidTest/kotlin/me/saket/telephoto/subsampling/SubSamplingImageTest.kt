@@ -619,7 +619,7 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(5.seconds) { state.isImageLoaded }
+    rule.waitUntil(5.seconds) { state.isImageDisplayed }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_preview")
     }

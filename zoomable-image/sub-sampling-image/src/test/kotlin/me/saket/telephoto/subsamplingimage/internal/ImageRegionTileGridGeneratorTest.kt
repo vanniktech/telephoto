@@ -21,18 +21,18 @@ import kotlin.time.measureTime
 
 class ImageRegionTileGridGeneratorTest {
 
-  @Test fun `empty canvas size`() {
+  @Test fun `empty viewport size`() {
     assertFailure {
       ImageRegionTileGrid.generate(
-        canvasSize = IntSize(1080, 0),
+        viewportSize = IntSize(1080, 0),
         unscaledImageSize = IntSize(10, 10),
       )
     }
   }
 
-  @Test fun `image size smaller than layout bounds`() {
+  @Test fun `image size smaller than viewport bounds`() {
     val tileGrid = ImageRegionTileGrid.generate(
-      canvasSize = IntSize(
+      viewportSize = IntSize(
         width = 1080,
         height = 2214
       ),
@@ -46,14 +46,14 @@ class ImageRegionTileGridGeneratorTest {
     assertThat(tileGrid.foreground).isEmpty()
   }
 
-  @Test fun `image size as a multiplier of layout bounds`() {
-    val canvasSize = IntSize(
+  @Test fun `image size as a multiplier of viewport bounds`() {
+    val viewportSize = IntSize(
       width = 1080,
       height = 1920
     )
     val tileGrid = ImageRegionTileGrid.generate(
-      canvasSize = canvasSize,
-      unscaledImageSize = canvasSize * 2
+      viewportSize = viewportSize,
+      unscaledImageSize = viewportSize * 2
     )
 
     // On telephoto 0.4.0 and lower versions, the sample size for
@@ -62,13 +62,13 @@ class ImageRegionTileGridGeneratorTest {
     assertThat(tileGrid.foreground).isNotEmpty()
   }
 
-  @Test fun `image size larger than layout bounds`() {
+  @Test fun `image size larger than viewport bounds`() {
     val imageSize = IntSize(
       width = 9734,
       height = 3265
     )
     val tileGrid = ImageRegionTileGrid.generate(
-      canvasSize = IntSize(
+      viewportSize = IntSize(
         width = 1080,
         height = 2214
       ),
@@ -116,7 +116,7 @@ class ImageRegionTileGridGeneratorTest {
     val time = measureTime {
       repeat(1_000) {
         ImageRegionTileGrid.generate(
-          canvasSize = IntSize(
+          viewportSize = IntSize(
             width = 1080 - (Random.nextInt(0..100)),
             height = 2214 - (Random.nextInt(0..100))
           ),
@@ -134,10 +134,10 @@ class ImageRegionTileGridGeneratorTest {
   }
 
   // Regression test for https://github.com/saket/telephoto/issues/49.
-  @Test fun `image size smaller than half of canvas in width`() {
+  @Test fun `image size smaller than half of viewport in width`() {
     val generateResult = runCatching {
       ImageRegionTileGrid.generate(
-        canvasSize = IntSize(
+        viewportSize = IntSize(
           width = 2204,
           height = 1080
         ),
@@ -153,7 +153,7 @@ class ImageRegionTileGridGeneratorTest {
   // Regression test for https://github.com/saket/telephoto/issues/94
   @Test fun `image height smaller than the minimum tile height`() {
     val grid = ImageRegionTileGrid.generate(
-      canvasSize = IntSize(1080, 2400),
+      viewportSize = IntSize(1080, 2400),
       unscaledImageSize = IntSize(30_000, 926),
       minTileSize = IntSize(540, 1200),
     )
@@ -169,7 +169,7 @@ class ImageRegionTileGridGeneratorTest {
   // Regression test for https://github.com/saket/telephoto/issues/94
   @Test fun `image width smaller than the minimum tile size`() {
     val grid = ImageRegionTileGrid.generate(
-      canvasSize = IntSize(1080, 2400),
+      viewportSize = IntSize(1080, 2400),
       unscaledImageSize = IntSize(926, 30_000),
       minTileSize = IntSize(1080, 1200),
     )

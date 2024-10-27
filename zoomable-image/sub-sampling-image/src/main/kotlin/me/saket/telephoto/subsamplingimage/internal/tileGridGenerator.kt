@@ -6,12 +6,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 
 internal fun ImageRegionTileGrid.Companion.generate(
-  canvasSize: IntSize,
+  viewportSize: IntSize,
   unscaledImageSize: IntSize,
-  minTileSize: IntSize = canvasSize / 2,
+  minTileSize: IntSize = viewportSize / 2,
 ): ImageRegionTileGrid {
   val baseSampleSize = ImageSampleSize.calculateFor(
-    canvasSize = canvasSize,
+    viewportSize = viewportSize,
     scaledImageSize = unscaledImageSize
   )
 
@@ -66,14 +66,14 @@ internal fun ImageRegionTileGrid.Companion.generate(
 
 /** Calculates a [ImageSampleSize] for fitting a source image in its layout bounds. */
 internal fun ImageSampleSize.Companion.calculateFor(
-  canvasSize: IntSize,
+  viewportSize: IntSize,
   scaledImageSize: IntSize
 ): ImageSampleSize {
-  check(canvasSize.minDimension > 0f) { "Can't calculate a sample size for $canvasSize" }
+  check(viewportSize.minDimension > 0f) { "Can't calculate a sample size for $viewportSize" }
 
   val zoom = minOf(
-    canvasSize.width / scaledImageSize.width.toFloat(),
-    canvasSize.height / scaledImageSize.height.toFloat()
+    viewportSize.width / scaledImageSize.width.toFloat(),
+    viewportSize.height / scaledImageSize.height.toFloat()
   )
   return calculateFor(zoom)
 }

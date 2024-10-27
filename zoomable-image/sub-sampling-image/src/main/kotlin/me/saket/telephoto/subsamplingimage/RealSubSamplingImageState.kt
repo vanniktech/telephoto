@@ -62,15 +62,15 @@ internal class RealSubSamplingImageState(
   }
 
   internal var imageRegionDecoder: ImageRegionDecoder? by mutableStateOf(null)
-  internal var canvasSize: IntSize? by mutableStateOf(null)
+  internal var viewportSize: IntSize? by mutableStateOf(null)
   internal var showTileBounds = false  // Only used by tests.
 
   private var loadedImages: ImmutableMap<ImageRegionTile, Painter> by mutableStateOf(persistentMapOf())
 
   private val isReadyToBeDisplayed: Boolean by derivedStateOf {
-    val canvasSize = canvasSize
+    val viewportSize = viewportSize
     val imageSize = imageRegionDecoder?.imageSize
-    canvasSize?.isNotEmpty() == true && imageSize?.isNotEmpty() == true
+    viewportSize?.isNotEmpty() == true && imageSize?.isNotEmpty() == true
   }
 
   // Note to self: This is not inlined in viewportTiles to
@@ -78,7 +78,7 @@ internal class RealSubSamplingImageState(
   private val tileGrid by derivedStateOf {
     if (isReadyToBeDisplayed) {
       ImageRegionTileGrid.generate(
-        canvasSize = canvasSize!!,  // todo: rename both to viewportSize.
+        viewportSize = viewportSize!!,
         unscaledImageSize = imageSize!!,
       )
     } else null
@@ -112,7 +112,7 @@ internal class RealSubSamplingImageState(
           ViewportTile(
             region = region,
             bounds = drawBounds,
-            isVisible = if (isBaseTile) canDrawBaseTile else drawBounds.overlaps(canvasSize!!),
+            isVisible = if (isBaseTile) canDrawBaseTile else drawBounds.overlaps(viewportSize!!),
             isBase = isBaseTile,
           )
         }

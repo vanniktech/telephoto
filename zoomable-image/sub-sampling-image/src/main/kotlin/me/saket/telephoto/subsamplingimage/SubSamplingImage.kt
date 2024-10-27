@@ -72,7 +72,7 @@ fun SubSamplingImage(
   Box(
     modifier
       .contentDescription(contentDescription)
-      .onSizeChanged { state.canvasSize = it } // todo: move this to a measure policy
+      .onSizeChanged { state.viewportSize = it } // todo: move this to a measure policy
       .drawBehind(onDraw)
       .wrapContentSizeIfNeeded(state.imageSize) // todo: move this to a measure policy
   )

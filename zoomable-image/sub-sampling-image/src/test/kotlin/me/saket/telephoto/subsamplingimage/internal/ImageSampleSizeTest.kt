@@ -11,7 +11,7 @@ class ImageSampleSizeTest {
   @Test fun `image size smaller than canvas size`() {
     assertThat(
       ImageSampleSize.calculateFor(
-        canvasSize = IntSize(2_000, 1_000),
+        viewportSize = IntSize(2_000, 1_000),
         scaledImageSize = IntSize(200, 100),
       ).size
     ).isEqualTo(1)
@@ -20,7 +20,7 @@ class ImageSampleSizeTest {
   @Test fun `image size equal to canvas size`() {
     assertThat(
       ImageSampleSize.calculateFor(
-        canvasSize = IntSize(2_000, 1_000),
+        viewportSize = IntSize(2_000, 1_000),
         scaledImageSize = IntSize(2_000, 1_000),
       ).size
     ).isEqualTo(1)
@@ -29,7 +29,7 @@ class ImageSampleSizeTest {
   @Test fun `image size larger than canvas size`() {
     assertThat(
       ImageSampleSize.calculateFor(
-        canvasSize = IntSize(200, 100),
+        viewportSize = IntSize(200, 100),
         scaledImageSize = IntSize(2_000, 1_000),
       ).size
     ).isEqualTo(8)
@@ -38,19 +38,19 @@ class ImageSampleSizeTest {
   @Test fun `throw when canvas size is unavailable`() {
     assertFailure {
       ImageSampleSize.calculateFor(
-        canvasSize = IntSize.Zero,
+        viewportSize = IntSize.Zero,
         scaledImageSize = IntSize(2_000, 1_000),
       )
     }
     assertFailure {
       ImageSampleSize.calculateFor(
-        canvasSize = IntSize(200, 0),
+        viewportSize = IntSize(200, 0),
         scaledImageSize = IntSize(2_000, 1_000),
       )
     }
     assertFailure {
       ImageSampleSize.calculateFor(
-        canvasSize = IntSize(0, 200),
+        viewportSize = IntSize(0, 200),
         scaledImageSize = IntSize(2_000, 1_000),
       )
     }
@@ -59,7 +59,7 @@ class ImageSampleSizeTest {
   @Test fun `do not throw when image size is unavailable`() {
     assertThat(
       ImageSampleSize.calculateFor(
-        canvasSize = IntSize(200, 100),
+        viewportSize = IntSize(200, 100),
         scaledImageSize = IntSize.Zero
       ).size
     ).isEqualTo(1)

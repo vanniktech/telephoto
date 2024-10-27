@@ -63,4 +63,10 @@ class BitmapSampleSizeTest {
       ).size
     ).isEqualTo(1)
   }
+
+  @Test fun `zero zoom`() {
+    assertThat(
+      BitmapSampleSize.calculateFor(zoom = 0f).size
+    ).isEqualTo(1)
+  }
 }

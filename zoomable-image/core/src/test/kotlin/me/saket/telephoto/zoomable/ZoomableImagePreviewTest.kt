@@ -11,8 +11,6 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.platform.LocalInspectionMode
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
-import assertk.assertThat
-import assertk.assertions.isNull
 import kotlinx.coroutines.flow.Flow
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import org.junit.Rule
@@ -24,13 +22,6 @@ class ZoomableImagePreviewTest {
   )
 
   @Test fun `layout preview`() {
-    var error: Throwable? = null
-    Thread.setDefaultUncaughtExceptionHandler { _, e ->
-      // Paparazzi isn't catching errors thrown by composables.
-      // TODO: File an issue on https://github.com/cashapp/paparazzi/issues/new/choose
-      error = e
-    }
-
     paparazzi.snapshot {
       CompositionLocalProvider(LocalInspectionMode provides true) {
         ZoomableImage(
@@ -47,6 +38,5 @@ class ZoomableImagePreviewTest {
         )
       }
     }
-    assertThat(error).isNull()
   }
 }

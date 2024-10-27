@@ -142,12 +142,12 @@ sealed interface SubSamplingImageState {
   val imageSize: IntSize?
 
   /**
-   * Whether all the visible tiles have been loaded and the image is displayed (not necessarily in its full quality).
+   * Whether the image is loaded and displayed (not necessarily in its full quality).
    *
    * Also see [isImageLoadedInFullQuality].
    */
   val isImageLoaded: Boolean
 
-  /** Whether all the visible and *full resolution* tiles have been loaded and the image is displayed. */
+  /** Whether the image is loaded and displayed in its full quality. */
   val isImageLoadedInFullQuality: Boolean
 }

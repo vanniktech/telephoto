@@ -46,17 +46,11 @@ internal class RealSubSamplingImageState(
   override val imageSize: IntSize?
     get() = imageRegionDecoder?.imageSize
 
-  /**
-   * Whether the image is loaded and displayed (not necessarily in its full quality).
-   *
-   * Also see [isImageLoadedInFullQuality].
-   */
   override val isImageLoaded: Boolean by derivedStateOf {
     isReadyToBeDisplayed && viewportImageTiles.isNotEmpty() &&
       (viewportImageTiles.fastAny { it.tile.isBase } || viewportImageTiles.fastAll { it.painter != null })
   }
 
-  /** Whether the image is loaded and displayed in its full quality. */
   override val isImageLoadedInFullQuality: Boolean by derivedStateOf {
     isImageLoaded && viewportImageTiles.fastAll { it.painter != null }
   }

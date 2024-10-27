@@ -46,6 +46,9 @@ internal class RealSubSamplingImageState(
   override val imageSize: IntSize?
     get() = imageRegionDecoder?.imageSize
 
+  private val imagePreview: Painter? =
+    imageSource.preview?.let(::BitmapPainter)
+
   override val isImageLoaded: Boolean by derivedStateOf {
     isReadyToBeDisplayed && viewportImageTiles.isNotEmpty() &&
       (viewportImageTiles.fastAny { it.tile.isBase } || viewportImageTiles.fastAll { it.painter != null })
@@ -91,11 +94,6 @@ internal class RealSubSamplingImageState(
 
   private val viewportTiles: ImmutableList<ViewportTile> by derivedStateOf {
     val tileGrid = tileGrid ?: return@derivedStateOf persistentListOf()
-    // todo:
-    // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
-    // a fallback. The base tile will hide again when all bitmaps have been loaded.
-    val canDrawBaseTile = true //foregroundRegions.isEmpty() || foregroundRegions.fastAny { it !in loadedBitmaps }
-
     val transformation = contentTransformation()
     val baseSampleSize = tileGrid.base.sampleSize
 
@@ -122,11 +120,25 @@ internal class RealSubSamplingImageState(
   }
 
   internal val viewportImageTiles: ImmutableList<ViewportImageTile> by derivedStateOf {
+    // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
+    // a fallback. The base tile will hide again when all bitmaps have been loaded.
+    val hasNoForeground = viewportTiles.fastAll { it.isBase }
+    val hasGapsInForeground = { viewportTiles.fastAny { !it.isBase && it.region !in loadedImages } }
+    val canDrawBaseTile = hasNoForeground || hasGapsInForeground()
+
     viewportTiles.fastMapNotNull { tile ->
       if (tile.isVisible) {
         ViewportImageTile(
           tile = tile,
-          painter = loadedImages[tile.region] ?: if (tile.isBase) imageSource.previewPainter() else null,
+          painter = if (tile.isBase) {
+            if (canDrawBaseTile) {
+              loadedImages[tile.region] ?: imagePreview
+            } else {
+              null
+            }
+          } else {
+            loadedImages[tile.region]
+          }
         )
       } else null
     }.toImmutableList()
@@ -154,8 +166,4 @@ internal class RealSubSamplingImageState(
       }
     }
   }
-}
-
-private fun SubSamplingImageSource.previewPainter(): Painter? {
-  return preview?.let(::BitmapPainter)
 }

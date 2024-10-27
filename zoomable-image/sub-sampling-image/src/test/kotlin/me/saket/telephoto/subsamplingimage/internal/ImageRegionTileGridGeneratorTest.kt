@@ -19,7 +19,7 @@ import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
-class ImageTileGridGeneratorTest {
+class ImageRegionTileGridGeneratorTest {
 
   @Test fun `empty canvas size`() {
     assertFailure {
@@ -102,7 +102,7 @@ class ImageTileGridGeneratorTest {
       assertThat(tiles.sumOf { it.bounds.area }, name).isEqualTo(imageSize.area)
 
       // Verify that the tiles don't have any overlap.
-      val overlappingTiles: List<ImageTile> = tiles.flatMap { tile ->
+      val overlappingTiles: List<ImageRegionTile> = tiles.flatMap { tile ->
         tiles.minus(tile).filter { other ->
           tile.bounds.overlaps(other.bounds)
         }

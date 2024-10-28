@@ -129,9 +129,9 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
         constraints.maxHeight / imageSize.height.toFloat()
       ).coerceAtMost(1f)
       constraints.constrain(
-        Constraints(
-          minWidth = (scaleToFitImage * imageSize.width).toCeilInt(),
-          minHeight = (scaleToFitImage * imageSize.height).toCeilInt()
+        Constraints.fixed(
+          width = (scaleToFitImage * imageSize.width).toCeilInt(),
+          height = (scaleToFitImage * imageSize.height).toCeilInt(),
         )
       )
     } else {

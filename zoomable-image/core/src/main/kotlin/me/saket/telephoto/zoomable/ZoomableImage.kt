@@ -29,9 +29,9 @@ import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
@@ -80,7 +80,7 @@ fun ZoomableImage(
   val resolved = key(image) {
     image.resolve(
       canvasSize = remember {
-        snapshotFlow { canvasSize }.filter { it.isSpecified }
+        snapshotFlow { canvasSize }.filter { it.isSpecified && !it.isEmpty() }
       }
     )
   }
@@ -92,7 +92,7 @@ fun ZoomableImage(
 
   Box(
     modifier = modifier
-      .onMeasure { canvasSize = it }
+      .onSizeChanged { canvasSize = it.toSize() }
       .focusForwarder(focusForwarder, enabled = state.hardwareShortcutsEnabled()),
     propagateMinConstraints = true,
   ) {
@@ -253,24 +253,6 @@ fun ZoomableImage(
     clipToBounds = clipToBounds,
     onDoubleClick = DoubleClickToZoomListener.cycle(),
   )
-}
-
-private fun Modifier.onMeasure(action: (Size) -> Unit): Modifier {
-  return layout { measurable, constraints ->
-    val maxSize = when {
-      constraints.isZero -> Size.Unspecified
-      else -> Size(
-        width = if (constraints.hasBoundedWidth) constraints.maxWidth.toFloat() else Float.NaN,
-        height = if (constraints.hasBoundedHeight) constraints.maxHeight.toFloat() else Float.NaN
-      )
-    }
-    action(maxSize)
-
-    val placeable = measurable.measure(constraints)
-    layout(placeable.width, placeable.height) {
-      placeable.place(0, 0)
-    }
-  }
 }
 
 @Composable

@@ -3,8 +3,8 @@
 package me.saket.telephoto.subsamplingimage
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -14,16 +14,17 @@ import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.constrain
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
@@ -69,12 +70,14 @@ fun SubSamplingImage(
     }
   }
 
-  Box(
-    modifier
+  Layout(
+    modifier = modifier
       .contentDescription(contentDescription)
-      .onSizeChanged { state.viewportSize = it } // todo: move this to a measure policy
-      .drawBehind(onDraw)
-      .wrapContentSizeIfNeeded(state.imageSize) // todo: move this to a measure policy
+      .drawBehind(onDraw),
+    measurePolicy = WrapContentSizeIfNeededPolicy(
+      imageSize = { state.imageSize },
+      onMeasured = { state.viewportSize = it },
+    )
   )
 }
 
@@ -115,32 +118,40 @@ private fun Modifier.contentDescription(contentDescription: String?): Modifier {
   }
 }
 
-@Stable
-@Suppress("NAME_SHADOWING")
-private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
-  if (imageSize == null) {
-    return this
-  }
-
-  return layout { measurable, constraints ->
+@Immutable
+private class WrapContentSizeIfNeededPolicy(
+  val imageSize: () -> IntSize?,
+  val onMeasured: (IntSize) -> Unit,
+) : MeasurePolicy {
+  override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+    val imageSize = imageSize()
     val constraints = if (constraints.hasFixedWidth && constraints.hasFixedHeight) {
       constraints
+    } else if (imageSize != null) {
+      val imageAspectRatio = imageSize.width / imageSize.height.toFloat()
+      val targetWidth = when {
+        constraints.hasFixedWidth -> constraints.maxWidth
+        constraints.hasBoundedWidth -> imageSize.width
+        else -> minOf(constraints.maxWidth, imageSize.width)  // To handle Constraints.Infinity
+      }
+      val targetHeight = when {
+        constraints.hasFixedHeight -> constraints.maxHeight
+        constraints.hasBoundedHeight -> imageSize.height
+        else -> minOf(constraints.maxHeight, imageSize.height) // To handle Constraints.Infinity
+      }
+      val heightBasedOnWidth = (targetWidth / imageAspectRatio).toCeilInt()
+      if (heightBasedOnWidth <= targetHeight) {
+        Constraints.fixed(width = targetWidth, height = heightBasedOnWidth)
+      } else {
+        val widthBasedOnHeight = (targetHeight * imageAspectRatio).toCeilInt()
+        Constraints.fixed(width = widthBasedOnHeight, height = targetHeight)
+      }
     } else {
-      val scaleToFitImage = minOf(
-        constraints.maxWidth / imageSize.width.toFloat(),
-        constraints.maxHeight / imageSize.height.toFloat()
-      ).coerceAtMost(1f)
-      constraints.constrain(
-        Constraints.fixed(
-          width = (scaleToFitImage * imageSize.width).toCeilInt(),
-          height = (scaleToFitImage * imageSize.height).toCeilInt(),
-        )
-      )
+      constraints
     }
-    val placeable = measurable.measure(constraints)
-    layout(width = placeable.width, height = placeable.height) {
-      placeable.place(IntOffset.Zero)
-    }
+    val layoutSize = IntSize(constraints.minWidth, constraints.minHeight)
+    onMeasured(layoutSize)
+    return layout(width = layoutSize.width, height = layoutSize.height) {}
   }
 }
 

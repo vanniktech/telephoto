@@ -9,8 +9,12 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,9 +54,9 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.SubSamplingImageState
 import me.saket.telephoto.subsamplingimage.internal.AndroidImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
+import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
@@ -628,6 +632,38 @@ class SubSamplingImageTest {
     rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_full_quality")
+    }
+  }
+
+  @Test fun wrap_content_size_in_a_vertically_infinite_layout() {
+    lateinit var state: SubSamplingImageState
+    rule.setContent {
+      val zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 2.5f))
+
+      Column(
+        Modifier
+          .fillMaxSize()
+          .verticalScroll(rememberScrollState())
+          .border(1.dp, Color.Red)
+      ) {
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color.Yellow)
+            .zoomable(zoomableState)
+            .testTag("image"),
+          state = rememberSubSamplingImageState(
+            zoomableState = zoomableState,
+            imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+          ).also { state = it },
+          contentDescription = null,
+        )
+      }
+    }
+
+    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
     }
   }
 

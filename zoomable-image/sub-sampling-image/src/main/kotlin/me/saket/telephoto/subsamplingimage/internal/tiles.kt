@@ -54,6 +54,7 @@ internal data class ViewportImageTile(
   val painter: Painter?,
 ) {
   val bounds get() = tile.bounds
+  val isBase get() = tile.isBase
 }
 
 /** See [BitmapFactory.Options.inSampleSize]. */

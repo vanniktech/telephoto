@@ -123,7 +123,9 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
   }
 
   return layout { measurable, constraints ->
-    val constraints = if (!constraints.hasFixedSize) {
+    val constraints = if (constraints.hasFixedWidth && constraints.hasFixedHeight) {
+      constraints
+    } else {
       val scaleToFitImage = minOf(
         constraints.maxWidth / imageSize.width.toFloat(),
         constraints.maxHeight / imageSize.height.toFloat()
@@ -134,8 +136,6 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
           height = (scaleToFitImage * imageSize.height).toCeilInt(),
         )
       )
-    } else {
-      constraints
     }
     val placeable = measurable.measure(constraints)
     layout(width = placeable.width, height = placeable.height) {
@@ -143,10 +143,6 @@ private fun Modifier.wrapContentSizeIfNeeded(imageSize: IntSize?): Modifier {
     }
   }
 }
-
-@Stable
-private val Constraints.hasFixedSize
-  get() = hasFixedWidth && hasFixedHeight
 
 @SuppressLint("ComposeParameterOrder")
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)  // For binary compatibility.

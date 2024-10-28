@@ -61,7 +61,7 @@ fun rememberSubSamplingImageState(
   )
 
   // SubSamplingImage will apply the transformations on its own.
-  DisposableEffect(state) {
+  DisposableEffect(zoomableState) {
     val previousValue = zoomableState.autoApplyTransformations
     zoomableState.autoApplyTransformations = false
     onDispose {

@@ -119,7 +119,7 @@ private fun Modifier.contentDescription(contentDescription: String?): Modifier {
 }
 
 @Immutable
-private class WrapContentSizeIfNeededPolicy(
+private data class WrapContentSizeIfNeededPolicy(
   val imageSize: () -> IntSize?,
   val onMeasured: (IntSize) -> Unit,
 ) : MeasurePolicy {

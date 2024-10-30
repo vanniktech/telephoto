@@ -124,7 +124,7 @@ class ZoomableTest {
     // content was ready was causing a crash.
     check(!zoomableState.real().isReadyToInteract)
     rule.onNodeWithTag("content").performTouchInput {
-      pinchToZoomBy(visibleSize.center / 2f)
+      pinchToZoomInBy(visibleSize.center / 2f)
     }
   }
 

@@ -186,7 +186,7 @@ class ZoomableImageTest {
       assertThat(finalScale.scaleX).isEqualTo(1f)
     }
     rule.onNodeWithTag("image").performTouchInput {
-      pinchToZoomBy(visibleSize.center / 2f)
+      pinchToZoomInBy(visibleSize.center / 2f)
     }
     rule.runOnIdle {
       assertThat(finalScale.scaleX).isEqualTo(2f)
@@ -497,7 +497,7 @@ class ZoomableImageTest {
 
     with(rule.onNodeWithTag("pager")) {
       performTouchInput {
-        pinchToZoomBy(visibleSize.center / 2f)
+        pinchToZoomInBy(visibleSize.center / 2f)
       }
       performTouchInput {
         swipeWithVelocity(scrollDirection)
@@ -537,7 +537,7 @@ class ZoomableImageTest {
 
     with(rule.onNodeWithTag("pager")) {
       performTouchInput {
-        pinchToZoomBy(visibleSize.center / 2f)
+        pinchToZoomInBy(visibleSize.center / 2f)
       }
       // First swipe will fully pan the content to its edge.
       // Second swipe should scroll the pager.
@@ -687,7 +687,7 @@ class ZoomableImageTest {
       }
 
       rule.onNodeWithTag("image").performTouchInput {
-        pinchToZoomBy(IntOffset(0, 5))
+        pinchToZoomInBy(IntOffset(0, 5))
       }
       rule.runOnIdle {
         assertThat(zoomFraction()!!).isEqualTo(1.0f)
@@ -965,7 +965,7 @@ class ZoomableImageTest {
 
     rule.onNodeWithTag("image").run {
       performTouchInput {
-        pinchToZoomBy(visibleSize.center / 2f)
+        pinchToZoomInBy(visibleSize.center / 2f)
       }
       performTouchInput {
         doubleClick()
@@ -1030,7 +1030,7 @@ class ZoomableImageTest {
     rule.onNodeWithTag("image_parent").run {
       performTouchInput {
         val touchSlop = viewConfiguration.touchSlop.toInt()
-        pinchToZoomBy(IntOffset(touchSlop + 2, touchSlop + 2))
+        pinchToZoomInBy(IntOffset(touchSlop + 2, touchSlop + 2))
       }
       performTouchInput {
         quickZoomIn()
@@ -1501,7 +1501,7 @@ class ZoomableImageTest {
     rule.waitForIdle()
     rule.onNodeWithTag("image").run {
       performTouchInput { doubleClick() }
-      performTouchInput { pinchToZoomBy(visibleSize.center / 2f) }
+      performTouchInput { pinchToZoomInBy(visibleSize.center / 2f) }
     }
 
     rule.runOnIdle {
@@ -1623,7 +1623,7 @@ private fun TouchInjectionScope.swipe(
   }
 }
 
-internal fun TouchInjectionScope.pinchToZoomBy(by: IntOffset) {
+internal fun TouchInjectionScope.pinchToZoomInBy(by: IntOffset) {
   pinch(
     start0 = center,
     start1 = center,

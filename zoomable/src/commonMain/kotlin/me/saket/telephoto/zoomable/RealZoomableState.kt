@@ -82,7 +82,10 @@ internal class RealZoomableState internal constructor(
           initialScale = gestureStateInputs.baseZoom.value,
           userZoom = gestureState.userZoom.value,
         ),
-        offset = -gestureState.offset * contentZoom.finalZoom(),
+        offset = (-gestureState.offset * contentZoom.finalZoom()).let {
+          // Make it easier for consumers to perform `if (offset == zero)` checks.
+          if (it == -Offset.Zero) Offset.Zero else it
+        },
         centroid = gestureState.lastCentroid,
       )
     } else {

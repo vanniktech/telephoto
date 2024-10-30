@@ -14,6 +14,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -29,14 +30,17 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
 import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
-import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotSameInstanceAs
+import assertk.assertions.isTrue
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
@@ -206,6 +210,70 @@ class ZoomableTest {
         "page_a" to 1f,
         "page_b" to 0f,
       )
+    }
+  }
+
+  @Test fun zoomable_state_can_be_updated() {
+    var key by mutableStateOf("a")
+    lateinit var lastZoomableState: ZoomableState
+
+    rule.setContent {
+      val zoomableState = key(key) {
+        rememberZoomableState(ZoomSpec(maxZoomFactor = 2f))
+      }.also {
+        lastZoomableState = it
+      }
+
+      Box(
+        Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState)
+          .testTag("content")
+      )
+    }
+    val content = rule.onNodeWithTag("content")
+    val firstZoomableState = lastZoomableState
+
+    content.performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      assertThat(firstZoomableState.zoomFraction).isEqualTo(1f)
+    }
+
+    rule.runOnIdle { key = "b" }
+    rule.waitUntil { lastZoomableState != firstZoomableState }
+    rule.mainClock.advanceTimeByFrame()
+
+    val secondZoomableState = lastZoomableState
+    assertThat(secondZoomableState).isNotSameInstanceAs(firstZoomableState)
+
+    // The new state won't retain content transformations from the previous state.
+    with(secondZoomableState) {
+      assertThat(zoomFraction).isNotEqualTo(firstZoomableState.zoomFraction)
+      assertThat(zoomFraction).isEqualTo(0f)
+      assertThat(contentTransformation.offset).isEqualTo(Offset.Zero)
+    }
+
+    // While content transformations aren't retained, the new state should still get
+    // hydrated with enough information by the modifier node that it can display the content.
+    with(secondZoomableState.contentTransformation) {
+      assertThat(isSpecified).isTrue()
+      assertThat(contentSize).isEqualTo(firstZoomableState.contentTransformation.contentSize)
+    }
+
+    // Zoom gestures should work with the new state.
+    content.performTouchInput {
+      doubleClick()
+    }
+    rule.runOnIdle {
+      assertThat(secondZoomableState.zoomFraction).isEqualTo(1f)
+      assertThat(secondZoomableState.contentTransformation.offset).isEqualTo(Offset(-540f, -1200f))
+    }
+
+    content.performTouchInput {
+      swipeLeft(startX = centerRight.x, endX = centerLeft.x)
+    }
+    rule.runOnIdle {
+      assertThat(secondZoomableState.contentTransformation.offset).isEqualTo(Offset(-1080f, -1200f))
     }
   }
 

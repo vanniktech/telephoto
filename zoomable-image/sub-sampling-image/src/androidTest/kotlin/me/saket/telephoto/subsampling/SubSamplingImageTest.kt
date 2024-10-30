@@ -444,19 +444,15 @@ class SubSamplingImageTest {
   }
 
   @Test fun center_aligned_and_wrap_content() {
-    var isImageDisplayed = false
-
+    lateinit var imageState: SubSamplingImageState
     rule.setContent {
       val zoomableState = rememberZoomableState(
-        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+        zoomSpec = ZoomSpec(maxZoomFactor = 2f)
       )
-      val imageState = rememberSubSamplingImageState(
+      imageState = rememberSubSamplingImageState(
         zoomableState = zoomableState,
-        imageSource = SubSamplingImageSource.asset("smol.jpg"),
+        imageSource = SubSamplingImageSource.asset("fox_1000.jpg"),
       )
-      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-        isImageDisplayed = imageState.isImageLoadedInFullQuality
-      }
 
       Box(
         modifier = Modifier.fillMaxSize(),
@@ -465,16 +461,31 @@ class SubSamplingImageTest {
         SubSamplingImage(
           modifier = Modifier
             .wrapContentSize()
-            .zoomable(zoomableState),
+            .zoomable(zoomableState)
+            .testTag("image"),
           state = imageState,
           contentDescription = null,
         )
       }
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { imageState.isImageLoadedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
+    }
+
+    rule.onNodeWithTag("image").performTouchInput {
+      doubleClick()
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_with_zoom")
+    }
+
+    rule.onNodeWithTag("image").performTouchInput {
+      swipeLeft(startX = centerRight.x, endX = centerLeft.x)
+    }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = "${testName.methodName}_with_zoom_and_pan")
     }
   }
 
@@ -574,10 +585,8 @@ class SubSamplingImageTest {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
 
-    with(rule.onNodeWithTag("image")) {
-      performTouchInput {
-        swipeLeft(startX = centerRight.x, endX = centerLeft.x)
-      }
+    rule.onNodeWithTag("image").performTouchInput {
+      swipeLeft(startX = centerRight.x, endX = centerLeft.x)
     }
     rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
     rule.runOnIdle {

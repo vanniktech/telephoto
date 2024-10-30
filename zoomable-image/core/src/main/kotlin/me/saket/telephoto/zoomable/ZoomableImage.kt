@@ -118,7 +118,7 @@ fun ZoomableImage(
     // no longer be aligned correctly and can't be displayed anymore. It'd be nice if the placeholder
     // can also be kept in sync with the zoomable state, but that's a hard problem to solve.
     var wasImageZoomedIn by rememberSaveable { mutableStateOf(false) }
-    DisposableEffect(Unit) {
+    DisposableEffect(state) {
       onDispose {
         // Note to self: it is important that this value update happens only after
         // the composition is disposed. Otherwise the placeholder will not be
@@ -134,7 +134,7 @@ fun ZoomableImage(
         state.zoomableState.contentTransformation.contentSize,
       )
       val boundsProvider = PlaceholderBoundsProvider(contentSize = painter.intrinsicSize)
-      DisposableEffect(boundsProvider) {
+      DisposableEffect(state, boundsProvider) {
         state.realZoomableState.placeholderBoundsProvider = boundsProvider
         onDispose {
           state.realZoomableState.placeholderBoundsProvider = null
@@ -204,7 +204,7 @@ fun ZoomableImage(
           zoomableState = state.zoomableState,
           imageOptions = delegate.imageOptions
         )
-        DisposableEffect(subSamplingState) {
+        DisposableEffect(state, subSamplingState) {
           state.subSamplingState = subSamplingState
           onDispose {
             state.subSamplingState = null

@@ -9,13 +9,17 @@ import me.saket.telephoto.zoomable.UserZoomFactor
 internal data class ZoomableSavedState private constructor(
   private val offsetX: Float?,
   private val offsetY: Float?,
-  private val userZoom: Float?
+  private val centroidX: Float?,
+  private val centroidY: Float?,
+  private val userZoom: Float?,
 ) : AndroidParcelable {
 
   constructor(gestureState: GestureState?) : this(
     offsetX = gestureState?.offset?.x,
     offsetY = gestureState?.offset?.y,
-    userZoom = gestureState?.userZoom?.value
+    centroidX = gestureState?.lastCentroid?.x,
+    centroidY = gestureState?.lastCentroid?.y,
+    userZoom = gestureState?.userZoom?.value,
   )
 
   fun asGestureState(): GestureState? {
@@ -27,7 +31,10 @@ internal data class ZoomableSavedState private constructor(
       userZoom = UserZoomFactor(
         value = userZoom ?: return null
       ),
-      lastCentroid = Offset.Zero,
+      lastCentroid = Offset(
+        x = centroidX ?: return null,
+        y = centroidY ?: return null,
+      ),
     )
   }
 }

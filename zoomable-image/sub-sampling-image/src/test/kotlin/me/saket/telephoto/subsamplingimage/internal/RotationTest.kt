@@ -1,12 +1,21 @@
 package me.saket.telephoto.subsamplingimage.internal
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.toAndroidRectF
+import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import androidx.core.graphics.toRect
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class RotationTest {
   @Test fun rotate_entire_image() {
     IntRect(
@@ -144,5 +153,24 @@ class RotationTest {
         )
       )
     }
+  }
+
+  @Test fun `upscale an image`() {
+    val imageBounds = Rect(Offset.Zero, Size(250f, 167f))
+    val matrix = createRotationMatrix(
+      bitmapSize = imageBounds.size,
+      orientation = ExifMetadata.ImageOrientation.None,
+      bounds = Size(1080f, 2400f),
+    )
+
+    assertThat(matrix.mapRect(imageBounds)).isEqualTo(
+      Rect(0f, 0f, 1080f, 2400f)
+    )
+  }
+
+  private fun android.graphics.Matrix.mapRect(rect: Rect): Rect {
+    val rectF = rect.toAndroidRectF()
+    mapRect(rectF)
+    return rectF.toRect().toComposeRect()
   }
 }

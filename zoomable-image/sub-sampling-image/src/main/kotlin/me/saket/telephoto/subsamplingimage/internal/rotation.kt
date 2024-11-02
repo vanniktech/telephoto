@@ -76,31 +76,42 @@ internal inline fun createRotationMatrix(
 ): Matrix {
   matrix.reset()
 
-  // Center the bitmap for rotation.
-  val bitmapCenterX = (bitmapSize.width / 2f).roundToInt().toFloat()
-  val bitmapCenterY = (bitmapSize.height / 2f).roundToInt().toFloat()
-  matrix.postTranslate(-bitmapCenterX, -bitmapCenterY)
-
+  // Calculate a scale to fill the bounds. For rotated orientations (90, 270),
+  // the width/height will be swapped since the bitmap will be rotated.
   val rotationDegrees = when (orientation) {
     ImageOrientation.None -> 0f
     ImageOrientation.Orientation90 -> 90f
     ImageOrientation.Orientation180 -> 180f
     ImageOrientation.Orientation270 -> 270f
   }
-  matrix.postRotate(rotationDegrees)
 
-  // Calculate scale based on rotated dimensions.
+  // Calculate scale to fill bounds completely (based on rotated dimensions).
+  // This scale happens from (0,0). This ensures a uniform scaling before any
+  // translations that could affect the scale ratios.
   val rotatedSize = if (rotationDegrees % 180 == 0f) bitmapSize else bitmapSize.flip()
   val scaleX = bounds.width / rotatedSize.width
   val scaleY = bounds.height / rotatedSize.height
   matrix.postScale(scaleX, scaleY)
 
-  // Center in bounds.
+  // Calculate points for rotation around the image's center.
+  val bitmapCenterX = (bitmapSize.width * scaleX / 2f).round()
+  val bitmapCenterY = (bitmapSize.height * scaleY / 2f).round()
+
+  // Post* matrix operations happen in reverse order, so reading bottom to top:
+  // 1. Translate to final bounds center
+  // 2. Rotate by required degrees
+  // 3. Translate to origin for rotation around center
+  // (The scale operation was already done first, above)
+
+  matrix.postTranslate(-bitmapCenterX, -bitmapCenterY)  // 3.
+  matrix.postRotate(rotationDegrees)  // 2.
+
   val left = 0f
   val top = 0f
-  val boundsCenterX = (left + bounds.width / 2f).round()
-  val boundsCenterY = (top + bounds.height / 2f).round()
-  matrix.postTranslate(boundsCenterX, boundsCenterY)
+  matrix.postTranslate( // 1.
+    (left + bounds.width / 2f).round(),
+    (top + bounds.height / 2f).round()
+  )
 
   return matrix
 }
@@ -109,7 +120,9 @@ internal inline fun createRotationMatrix(
  * Used for matching the precise calculations of Bitmap.createBitmap()
  * when it's used for creating rotated bitmaps.
  */
-private inline fun Float.round(): Float = roundToInt().toFloat()
+private inline fun Float.round(): Float {
+  return roundToInt().toFloat()
+}
 
 private fun IntOffset.flip(): IntOffset = IntOffset(x = y, y = x)
 private fun IntSize.flip(): IntSize = IntSize(width = height, height = width)

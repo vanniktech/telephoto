@@ -75,7 +75,7 @@ fun SubSamplingImage(
       .contentDescription(contentDescription)
       .drawBehind(onDraw),
     measurePolicy = WrapContentSizeIfNeededPolicy(
-      imageSize = { state.imageSize },
+      unscaledImageSize = { state.imageSize ?: state.imagePreviewSize },
       onMeasured = { state.viewportSize = it },
     )
   )
@@ -120,11 +120,11 @@ private fun Modifier.contentDescription(contentDescription: String?): Modifier {
 
 @Immutable
 private data class WrapContentSizeIfNeededPolicy(
-  val imageSize: () -> IntSize?,
+  val unscaledImageSize: () -> IntSize?,
   val onMeasured: (IntSize) -> Unit,
 ) : MeasurePolicy {
   override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
-    val imageSize = imageSize()
+    val imageSize = unscaledImageSize()
     val constraints = if (constraints.hasFixedWidth && constraints.hasFixedHeight) {
       constraints
     } else if (imageSize != null) {

@@ -139,6 +139,7 @@ private fun createImageRegionDecoder(
 /** State for [SubSamplingImage]. */
 @Stable
 sealed interface SubSamplingImageState {
+  /** Raw size of the image, without any scaling applied. */
   val imageSize: IntSize?
 
   /**

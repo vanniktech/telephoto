@@ -28,6 +28,7 @@ import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
 import me.saket.telephoto.subsamplingimage.internal.ViewportTile
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
 import me.saket.telephoto.subsamplingimage.internal.contains
+import me.saket.telephoto.subsamplingimage.internal.discardFractionalParts
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.isNotEmpty
@@ -46,8 +47,12 @@ internal class RealSubSamplingImageState(
   override val imageSize: IntSize?
     get() = imageRegionDecoder?.imageSize
 
+  // todo: it isn't great that the preview image remains in memory even after the full image is loaded.
   private val imagePreview: Painter? =
     imageSource.preview?.let(::BitmapPainter)
+
+  internal val imagePreviewSize: IntSize?
+    get() = imagePreview?.intrinsicSize?.discardFractionalParts()
 
   override val isImageDisplayed: Boolean by derivedStateOf {
     isReadyToBeDisplayed && viewportImageTiles.isNotEmpty() &&

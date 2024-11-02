@@ -165,10 +165,12 @@ class ZoomableImageTest {
   }
 
   @Test fun zoom_in() {
-    var finalScale = ScaleFactor.Unspecified
+    var imageScale = ScaleFactor.Unspecified
 
     rule.setContent {
-      val zoomableState = rememberZoomableState()
+      val zoomableState = rememberZoomableState().also {
+        imageScale = it.contentTransformation.scale
+      }
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -177,20 +179,17 @@ class ZoomableImageTest {
         state = rememberZoomableImageState(zoomableState),
         contentDescription = null,
       )
-      LaunchedEffect(zoomableState.contentTransformation) {
-        finalScale = zoomableState.contentTransformation.scale
-      }
     }
 
     rule.runOnIdle {
-      assertThat(finalScale.scaleX).isEqualTo(1f)
+      assertThat(imageScale.scaleX).isEqualTo(1f)
     }
     rule.onNodeWithTag("image").performTouchInput {
       pinchToZoomInBy(visibleSize.center / 2f)
     }
     rule.runOnIdle {
-      assertThat(finalScale.scaleX).isEqualTo(2f)
-      assertThat(finalScale.scaleY).isEqualTo(2f)
+      assertThat(imageScale.scaleX).isEqualTo(2f)
+      assertThat(imageScale.scaleY).isEqualTo(2f)
       dropshots.assertSnapshot(rule.activity)
     }
   }
@@ -563,7 +562,9 @@ class ZoomableImageTest {
     rule.setContent {
       val zoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
-      )
+      ).also {
+        imageScale = it.contentTransformation.scale
+      }
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -572,10 +573,6 @@ class ZoomableImageTest {
         contentDescription = null,
         state = rememberZoomableImageState(zoomableState),
       )
-
-      LaunchedEffect(zoomableState.contentTransformation) {
-        imageScale = zoomableState.contentTransformation.scale
-      }
     }
 
     rule.onNodeWithTag("image").performTouchInput {
@@ -605,7 +602,9 @@ class ZoomableImageTest {
     rule.setContent {
       val zoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = maxZoomFactor)
-      )
+      ).also {
+        imageScale = it.contentTransformation.scale
+      }
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
@@ -616,9 +615,6 @@ class ZoomableImageTest {
       )
       SideEffect {
         transformations.add(zoomableState.contentTransformation)
-      }
-      LaunchedEffect(zoomableState.contentTransformation) {
-        imageScale = zoomableState.contentTransformation.scale
       }
       LaunchedEffect(resetTriggers) {
         resetTriggers.receive()
@@ -891,7 +887,6 @@ class ZoomableImageTest {
   }
 
   @Test fun double_click_should_toggle_zoom() {
-    var zoomFraction: Float? = null
     lateinit var state: ZoomableState
     lateinit var composeScope: CoroutineScope
 
@@ -910,20 +905,16 @@ class ZoomableImageTest {
         onClick = { error("click listener should not get called") },
         onLongClick = { error("long click listener should not get called") },
       )
-
-      LaunchedEffect(state.zoomFraction) {
-        zoomFraction = state.zoomFraction
-      }
     }
 
     rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
     rule.runOnIdle {
-      assertThat(zoomFraction).isEqualTo(1f)
+      assertThat(state.zoomFraction).isEqualTo(1f)
     }
 
     rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
     rule.runOnIdle {
-      assertThat(zoomFraction).isEqualTo(0f)
+      assertThat(state.zoomFraction).isEqualTo(0f)
     }
 
     // When the image is partially zoomed out, double clicking on it should zoom-in again.
@@ -932,11 +923,11 @@ class ZoomableImageTest {
       state.zoomTo(zoomFactor = 1.8f)
     }
     rule.runOnIdle {
-      assertThat(zoomFraction!!).isCloseTo(0.8f, delta = 0.01f)
+      assertThat(state.zoomFraction!!).isCloseTo(0.8f, delta = 0.01f)
     }
     rule.onNodeWithTag("zoomable").performTouchInput { doubleClick() }
     rule.runOnIdle {
-      assertThat(zoomFraction).isEqualTo(1f)
+      assertThat(state.zoomFraction).isEqualTo(1f)
     }
   }
 

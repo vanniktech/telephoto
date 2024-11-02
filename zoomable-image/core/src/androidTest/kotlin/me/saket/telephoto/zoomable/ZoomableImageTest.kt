@@ -265,25 +265,22 @@ class ZoomableImageTest {
     @TestParameter subSamplingStatus: SubSamplingStatus,
   ) {
     screenshotValidator.tolerancePercentOnCi = 0.18f
-    var isImageDisplayed = false
 
+    lateinit var state: ZoomableImageState
     rule.setContent {
-      val state = rememberZoomableImageState()
-      isImageDisplayed = state.isImageDisplayed && state.zoomableState.contentTransformation.isSpecified
-
       ZoomableImage(
         modifier = Modifier
           .then(layoutSize.modifier)
           .testTag("image"),
         image = ZoomableImageSource.asset(imageAsset.assetName, subSample = subSamplingStatus.enabled),
         contentDescription = null,
-        state = state,
+        state = rememberZoomableImageState().also { state = it },
         contentScale = contentScale.value,
         alignment = alignment.value,
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -297,7 +294,7 @@ class ZoomableImageTest {
         end1 = centerLeft + by.toOffset(),
       )
     }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -307,7 +304,7 @@ class ZoomableImageTest {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }

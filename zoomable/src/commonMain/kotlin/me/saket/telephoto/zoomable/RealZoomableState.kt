@@ -197,9 +197,6 @@ internal class RealZoomableState internal constructor(
         ?: placeholderBoundsProvider?.calculate(state = this@RealZoomableState)
         ?: Rect.Zero
     }
-      .also {
-        println("created transformed bounds = $it (unscaled content bounds = ${calculateGestureStateInputs()?.unscaledContentBounds}, scale = ${contentTransformation.scale}, offset = ${contentTransformation.offset}")
-      }
   }
 
   /**

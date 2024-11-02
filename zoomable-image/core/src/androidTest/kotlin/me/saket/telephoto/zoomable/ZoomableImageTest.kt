@@ -312,25 +312,22 @@ class ZoomableImageTest {
 
   @Test fun rtl_layout_direction() {
     screenshotValidator.tolerancePercentOnCi = 0.18f
-    var isImageDisplayed = false
+    lateinit var state: ZoomableImageState
 
     rule.setContent {
       CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        val state = rememberZoomableImageState()
-        isImageDisplayed = state.isImageDisplayed && state.zoomableState.contentTransformation.isSpecified
-
         ZoomableImage(
           modifier = Modifier
             .fillMaxSize()
             .testTag("image"),
           image = ZoomableImageSource.asset("fox_1500.jpg", subSample = true),
           contentDescription = null,
-          state = state,
+          state = rememberZoomableImageState().also { state = it },
         )
       }
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -338,7 +335,7 @@ class ZoomableImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick()
     }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -348,7 +345,7 @@ class ZoomableImageTest {
         swipeLeft(startX = center.x, endX = centerLeft.x)
       }
     }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
@@ -1036,7 +1033,7 @@ class ZoomableImageTest {
 
   // Regression test for https://github.com/saket/telephoto/issues/33
   @Test fun panning_in_reverse_works_after_image_is_panned_to_the_edge() {
-    var isImageDisplayed = false
+    lateinit var state: ZoomableImageState
 
     rule.setContent {
       ZoomableImage(
@@ -1047,13 +1044,11 @@ class ZoomableImageTest {
         contentDescription = null,
         state = rememberZoomableImageState(
           rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 2f))
-        ).also {
-          isImageDisplayed = it.isImageDisplayed
-        },
+        ).also { state = it },
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { state.isImageDisplayed }
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick(position = Offset.Zero)
     }
@@ -1370,9 +1365,7 @@ class ZoomableImageTest {
             .testTag("image"),
           image = ZoomableImageSource.placeholderOnly(placeholderParam.painter()),
           contentDescription = null,
-          state = rememberZoomableImageState(zoomableState).also {
-            imageState = it
-          },
+          state = rememberZoomableImageState(zoomableState).also { imageState = it },
         )
         Canvas(Modifier.matchParentSize()) {
           val bounds = zoomableState.transformedContentBounds

@@ -5,27 +5,28 @@ import androidx.compose.ui.util.packFloats
 import androidx.compose.ui.util.unpackFloat1
 import androidx.compose.ui.util.unpackFloat2
 import me.saket.telephoto.zoomable.GestureState
+import me.saket.telephoto.zoomable.UserOffset
 import me.saket.telephoto.zoomable.UserZoomFactor
 
 @AndroidParcelize
 @Suppress("DataClassPrivateConstructor")
 internal data class ZoomableSavedState private constructor(
-  private val offset: Long?,
-  private val centroid: Long?,
+  private val userOffset: Long?,
   private val userZoom: Float?,
+  private val centroid: Long?,
 ) : AndroidParcelable {
 
   constructor(gestureState: GestureState?) : this(
-    offset = gestureState?.offset?.packToLong(),
-    centroid = gestureState?.lastCentroid?.packToLong(),
+    userOffset = gestureState?.userOffset?.value?.packToLong(),
     userZoom = gestureState?.userZoom?.value,
+    centroid = gestureState?.lastCentroid?.packToLong(),
   )
 
   fun asGestureState(): GestureState? {
     return GestureState(
-      offset = offset?.unpackAsOffset() ?: return null,
+      userOffset = UserOffset(userOffset?.unpackAsOffset() ?: return null),
+      userZoom = UserZoomFactor(userZoom ?: return null),
       lastCentroid = centroid?.unpackAsOffset() ?: return null,
-      userZoom = UserZoomFactor(value = userZoom ?: return null),
     )
   }
 }

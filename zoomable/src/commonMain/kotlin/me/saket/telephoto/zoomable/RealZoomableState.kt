@@ -73,6 +73,10 @@ internal class RealZoomableState internal constructor(
     if (gestureStateInputs != null) {
       val gestureState = gestureState.calculate(gestureStateInputs)
       val contentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
+      val contentOffset = ContentOffset(
+        baseOffsetForAlignment = gestureStateInputs.calculateOffsetForAlignment(),
+        userOffset = gestureState.userOffset,
+      )
       val contentSize = gestureStateInputs.unscaledContentBounds.size
       RealZoomableContentTransformation(
         isSpecified = true,
@@ -82,7 +86,7 @@ internal class RealZoomableState internal constructor(
           initialScale = gestureStateInputs.baseZoom.value,
           userZoom = gestureState.userZoom.value,
         ),
-        offset = (-gestureState.offset * contentZoom.finalZoom()).let {
+        offset = (-contentOffset.finalOffset() * contentZoom.finalZoom()).let {
           // Make it easier for consumers to perform `if (offset == zero)` checks.
           if (it == -Offset.Zero) Offset.Zero else it
         },
@@ -145,7 +149,7 @@ internal class RealZoomableState internal constructor(
       initialGestureState ?: GestureState(
         userZoom = UserZoomFactor(1f),
         lastCentroid = inputs.contentLayoutSize.center,
-        offset = inputs.initialOffsetForContentAlignment(),
+        userOffset = UserOffset(Offset.Zero),
       )
     }
   )
@@ -193,6 +197,9 @@ internal class RealZoomableState internal constructor(
         ?: placeholderBoundsProvider?.calculate(state = this@RealZoomableState)
         ?: Rect.Zero
     }
+      .also {
+        println("created transformed bounds = $it (unscaled content bounds = ${calculateGestureStateInputs()?.unscaledContentBounds}, scale = ${contentTransformation.scale}, offset = ${contentTransformation.offset}")
+      }
   }
 
   /**
@@ -251,15 +258,20 @@ internal class RealZoomableState internal constructor(
         "New zoom is invalid/infinite = $newZoom. ${collectDebugInfoForIssue41("zoomDelta" to zoomDelta)}"
       }
 
+      val oldOffset = ContentOffset(
+        baseOffsetForAlignment = inputs.calculateOffsetForAlignment(),
+        userOffset = lastGestureState.userOffset,
+      )
       GestureState(
-        offset = lastGestureState.offset
+        userOffset = oldOffset
           .retainCentroidPositionAfterZoom(
             centroid = centroid,
             panDelta = panDelta,
             oldZoom = oldZoom,
             newZoom = newZoom,
           )
-          .coerceWithinContentBounds(proposedZoom = newZoom, inputs = inputs),
+          .coerceWithinContentBounds(proposedZoom = newZoom, inputs = inputs)
+          .userOffset,
         userZoom = newZoom.userZoom,
         lastCentroid = centroid,
       )
@@ -272,16 +284,19 @@ internal class RealZoomableState internal constructor(
 
     val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, current.userZoom)
     val panDeltaWithZoom = panDelta / currentZoom
-    val newOffset = current.offset - panDeltaWithZoom
-    check(newOffset.isFinite) {
+    val targetOffset = ContentOffset(
+      baseOffsetForAlignment = gestureStateInputs.calculateOffsetForAlignment(),
+      userOffset = current.userOffset - panDeltaWithZoom,
+    )
+    check(targetOffset.isFinite) {
       "Offset can't be infinite ${collectDebugInfoForIssue41("panDelta" to panDelta)}"
     }
 
-    val newOffsetWithinBounds = newOffset.coerceWithinContentBounds(
+    val targetOffsetWithinBounds = targetOffset.coerceWithinContentBounds(
       proposedZoom = currentZoom,
       inputs = gestureStateInputs,
     )
-    val consumedPan = panDeltaWithZoom - (newOffsetWithinBounds - newOffset)
+    val consumedPan = panDeltaWithZoom - (targetOffsetWithinBounds.userOffset.value - targetOffset.userOffset.value)
     val isHorizontalPan = abs(panDeltaWithZoom.x) > abs(panDeltaWithZoom.y)
 
     return (if (isHorizontalPan) abs(consumedPan.x) else abs(consumedPan.y)) > ZoomDeltaEpsilon
@@ -291,12 +306,12 @@ internal class RealZoomableState internal constructor(
    * Translate this offset such that the visual position of [centroid]
    * remains the same after applying [panDelta] and [newZoom].
    */
-  private fun Offset.retainCentroidPositionAfterZoom(
+  private fun ContentOffset.retainCentroidPositionAfterZoom(
     centroid: Offset,
     panDelta: Offset = Offset.Zero,
     oldZoom: ContentZoomFactor,
     newZoom: ContentZoomFactor,
-  ): Offset {
+  ): ContentOffset {
     check(this.isFinite) {
       "Can't center around an infinite offset ${collectDebugInfoForIssue41()}"
     }
@@ -324,29 +339,34 @@ internal class RealZoomableState internal constructor(
     //
     // Note to self: these values are divided by zoom because that's how the final offset
     // for UI is calculated: -offset * zoom.
-    //
-    //      Move the centroid to the center
-    //          of panned content(?)
-    //                   |                       Scale
-    //                   |                         |                Move back
-    //                   |                         |           (+ new translation)
-    //                   |                         |                    |
-    //      _____________|_____________    ________|_________   ________|_________
-    return ((this + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)).also {
-      check(it.isFinite) {
-        val debugInfo = collectDebugInfoForIssue41(
-          "centroid" to centroid,
-          "panDelta" to panDelta,
-          "oldZoom" to oldZoom,
-          "newZoom" to newZoom,
-        )
-        "retainCentroidPositionAfterZoom() generated an infinite value. $debugInfo"
+    return transformUserOffset { finalOffset ->
+      //
+      // Move the centroid to the center
+      //      of panned content(?)
+      //                 |                         Scale
+      //                 |                           |                Move back
+      //                 |                           |           (+ new translation)
+      //                 |                           |                    |
+      // ________________|______________     ________|_________   ________|_________
+      ((finalOffset + centroid / oldZoom) - (centroid / newZoom + panDelta / oldZoom)).also {
+        check(it.isFinite) {
+          val debugInfo = collectDebugInfoForIssue41(
+            "centroid" to centroid,
+            "panDelta" to panDelta,
+            "oldZoom" to oldZoom,
+            "newZoom" to newZoom,
+          )
+          "retainCentroidPositionAfterZoom() generated an infinite value. $debugInfo"
+        }
       }
     }
   }
 
-  private fun Offset.coerceWithinContentBounds(proposedZoom: ContentZoomFactor, inputs: GestureStateInputs): Offset {
-    check(this.isFinite) {
+  private fun ContentOffset.coerceWithinContentBounds(
+    proposedZoom: ContentZoomFactor,
+    inputs: GestureStateInputs,
+  ): ContentOffset {
+    check(isFinite) {
       "Can't coerce an infinite offset ${collectDebugInfoForIssue41("proposedZoom" to proposedZoom)}"
     }
 
@@ -354,13 +374,15 @@ internal class RealZoomableState internal constructor(
     val scaledTopLeft = unscaledContentBounds.topLeft * proposedZoom
 
     // Note to self: (-offset * zoom) is the final value used for displaying the content composable.
-    return withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) { offset ->
-      val expectedDrawRegion = Rect(offset, unscaledContentBounds.size * proposedZoom).throwIfDrawRegionIsTooLarge()
-      expectedDrawRegion.calculateTopLeftToOverlapWith(
-        destination = inputs.contentLayoutSize,
-        alignment = inputs.contentAlignment,
-        layoutDirection = inputs.layoutDirection,
-      )
+    return transformUserOffset { finalOffset ->
+      finalOffset.withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
+        val expectedDrawRegion = Rect(it, unscaledContentBounds.size * proposedZoom).throwIfDrawRegionIsTooLarge()
+        expectedDrawRegion.calculateTopLeftToOverlapWith(
+          destination = inputs.contentLayoutSize,
+          alignment = inputs.contentAlignment,
+          layoutDirection = inputs.layoutDirection,
+        )
+      }
     }
   }
 
@@ -450,7 +472,8 @@ internal class RealZoomableState internal constructor(
     val startGestureState = gestureState.calculate(gestureStateInputs)
 
     val startZoom = ContentZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
-    val targetOffset = startGestureState.offset
+    val startOffset = ContentOffset(gestureStateInputs.calculateOffsetForAlignment(), startGestureState.userOffset)
+    val targetOffset = startOffset
       .retainCentroidPositionAfterZoom(
         centroid = centroid,
         oldZoom = startZoom,
@@ -484,15 +507,18 @@ internal class RealZoomableState internal constructor(
         // For animating the offset, it is necessary to interpolate between values that the UI
         // will see (i.e., -offset * zoom). Otherwise, a curve animation is produced if only the
         // offset is used because the zoom and the offset values animate at different scales.
-        val animatedOffsetForUi: Offset = lerp(
-          start = (-startGestureState.offset * startZoom),
-          stop = (-targetOffset * targetZoom),
-          fraction = value
+        val animatedOffsetForUi = startOffset.copy(
+          userOffset = UserOffset(
+            -lerp(
+              start = (-startGestureState.userOffset.value * startZoom),
+              stop = (-targetOffset.userOffset.value * targetZoom),
+              fraction = value,
+            ) / animatedZoom
+          )
         )
-
         gestureState = GestureStateCalculator {
           startGestureState.copy(
-            offset = (-animatedOffsetForUi) / animatedZoom,
+            userOffset = animatedOffsetForUi.userOffset,
             userZoom = animatedZoom.userZoom,
             lastCentroid = centroid,
           )
@@ -538,7 +564,7 @@ internal class RealZoomableState internal constructor(
 
     val gestureState = calculateGestureState() ?: error("called too early? ${!isReadyToInteract}")
     transformableState.transform(MutatePriorities.FlingAnimation) {
-      var previous = gestureState.offset
+      var previous = gestureState.userOffset.value
       AnimationState(
         typeConverter = Offset.VectorConverter,
         initialValue = previous,
@@ -605,7 +631,7 @@ internal class RealZoomableState internal constructor(
 
 /** An intermediate, non-normalized model used for generating [ZoomableContentTransformation]. */
 internal data class GestureState(
-  val offset: Offset,
+  val userOffset: UserOffset,
   // Note to self: Having ContentZoomFactor here would be convenient, but it complicates
   // state restoration. This class should not capture any layout-related values.
   val userZoom: UserZoomFactor,
@@ -619,7 +645,7 @@ private data class GestureStateInputs(
   val contentAlignment: Alignment,
   val layoutDirection: LayoutDirection,
 ) {
-  fun initialOffsetForContentAlignment(): Offset {
+  fun calculateOffsetForAlignment(): Offset {
     val alignmentOffset = contentAlignment.align(
       size = (unscaledContentBounds.size * baseZoom.value).roundToIntSize(),
       space = contentLayoutSize.roundToIntSize(),
@@ -643,7 +669,7 @@ private fun interface GestureStateInputsCalculator {
 /**
  * The minimum scale needed to position the content within its layout
  * bounds with respect to [ZoomableState.contentScale].
- * */
+ **/
 @JvmInline
 @Immutable
 internal value class BaseZoomFactor(val value: ScaleFactor) {
@@ -711,6 +737,34 @@ internal data class ContentZoomFactor(
         userZoom = UserZoomFactor(finalZoom / baseZoom.maxScale),
       )
     }
+  }
+}
+
+/** Offset applied by the user on top of a base offset. Similar to [UserZoomFactor]. */
+@JvmInline
+@Immutable
+internal value class UserOffset(val value: Offset) {
+  operator fun minus(other: Offset): UserOffset =
+    UserOffset(value.minus(other))
+}
+
+internal data class ContentOffset(
+  /**
+   * The minimum offset needed to position the content within its layout
+   * bounds with respect to [ZoomableState.contentAlignment].
+   * */
+  private val baseOffsetForAlignment: Offset,
+  val userOffset: UserOffset,
+) {
+  val isFinite: Boolean get() = finalOffset().isFinite
+
+  fun finalOffset(): Offset = baseOffsetForAlignment + userOffset.value
+
+  fun transformUserOffset(block: (finalOffset: Offset) -> Offset): ContentOffset {
+    val transformed = block(finalOffset())
+    return this.copy(
+      userOffset = UserOffset(transformed - this.baseOffsetForAlignment)
+    )
   }
 }
 

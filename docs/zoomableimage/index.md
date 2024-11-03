@@ -116,6 +116,9 @@ When combined with a cross-fade transition, `ZoomableImage` will smoothly swap o
     ```
     More details about `thumbnail()` can be found on [Glide's website](https://bumptech.github.io/glide/doc/options.html#thumbnail-requests).
 
+!!! Warning
+    Placeholders are visually incompatible with `Modifier.wrapContentSize()`.
+
 ### Content alignment
 
 | ![type:video](../assets/alignment_top_small.mp4) | ![type:video](../assets/alignment_bottom_small.mp4) |

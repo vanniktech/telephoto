@@ -12,7 +12,7 @@ internal data class RealZoomableContentTransformation(
   override val scaleMetadata: ScaleMetadata,
   override val offset: Offset,
   override val centroid: Offset?,
-  override val contentSize: Size = Size.Unspecified,
+  override val contentSize: Size,
   override val rotationZ: Float = 0f,
 ) : ZoomableContentTransformation {
 

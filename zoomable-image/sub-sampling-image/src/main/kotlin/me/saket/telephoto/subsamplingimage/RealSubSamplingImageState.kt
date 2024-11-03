@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
@@ -41,7 +42,7 @@ import me.saket.telephoto.zoomable.ZoomableContentTransformation
 @Stable
 internal class RealSubSamplingImageState(
   imageSource: SubSamplingImageSource,
-  private val contentTransformation: () -> ZoomableContentTransformation,
+  val contentTransformation: () -> ZoomableContentTransformation,
 ) : SubSamplingImageState {
 
   override val imageSize: IntSize?
@@ -51,8 +52,11 @@ internal class RealSubSamplingImageState(
   private val imagePreview: Painter? =
     imageSource.preview?.let(::BitmapPainter)
 
-  internal val imagePreviewSize: IntSize?
-    get() = imagePreview?.intrinsicSize?.discardFractionalParts()
+  internal val imagePreviewIntSize: IntSize?
+    get() = imagePreviewSize?.discardFractionalParts()
+
+  internal val imagePreviewSize: Size?
+    get() = imagePreview?.intrinsicSize
 
   override val isImageDisplayed: Boolean by derivedStateOf {
     isReadyToBeDisplayed && viewportImageTiles.isNotEmpty() &&

@@ -18,10 +18,9 @@ internal data class RotatedBitmapPainter(
   override val intrinsicSize: Size
     get() = Size(image.width.toFloat(), image.height.toFloat())
 
-  private val paint = Paint().also {
-    // todo: undo
-    //it.isAntiAlias = true
-  }
+  // Note to self: Compose UI's Paint() enables anti-aliasing
+  // and bilinear sampling on scaled bitmaps by default.
+  private val paint = Paint()
 
   override fun applyAlpha(alpha: Float): Boolean {
     this.paint.alpha = alpha

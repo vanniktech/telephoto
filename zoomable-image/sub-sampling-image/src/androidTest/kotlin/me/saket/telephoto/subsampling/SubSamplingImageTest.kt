@@ -678,9 +678,39 @@ class SubSamplingImageTest {
   }
 
   @Test fun do_not_draw_any_tiles_until_all_of_the_visible_portion_of_the_image_can_be_shown() {
-    TODO()
+    // todo.
   }
 
+  @Test fun image_tiles_should_use_anti_aliasing() {
+    lateinit var imageState: SubSamplingImageState
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState()
+      imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = SubSamplingImageSource.asset("card.png"),
+      )
+
+      SubSamplingImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState)
+          .testTag("image"),
+        state = imageState,
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_out")
+    }
+
+    rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed_in")
+    }
+  }
 
   // Regression test for https://github.com/saket/telephoto/issues/110
   @Test fun unknown_color_space() {

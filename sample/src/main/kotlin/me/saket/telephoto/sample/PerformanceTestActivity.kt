@@ -48,7 +48,7 @@ class PerformanceTestActivity : AppCompatActivity() {
               .align(Alignment.BottomCenter),
             verticalArrangement = Arrangement.spacedBy(4.dp),
           ) {
-            if (imageState.subSamplingState?.isImageLoadedInFullQuality == true) {
+            if (imageState.subSamplingState?.isImageDisplayedInFullQuality == true) {
               Text(
                 text = "Tiles loaded",
                 color = MaterialTheme.colorScheme.onBackground,

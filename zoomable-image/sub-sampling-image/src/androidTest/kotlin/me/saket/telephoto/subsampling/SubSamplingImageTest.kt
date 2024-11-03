@@ -127,8 +127,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = remember { imageSource.source(context) }
       )
-      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-        isImageDisplayed = imageState.isImageLoadedInFullQuality
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
       }
 
       SubSamplingImage(
@@ -160,8 +160,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = imageSize.source,
       )
-      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-        isImageDisplayed = imageState.isImageLoadedInFullQuality
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
       }
 
       SubSamplingImage(
@@ -206,7 +206,7 @@ class SubSamplingImageTest {
       )
     }
 
-    rule.waitUntil(5.seconds) { imageState.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -216,7 +216,7 @@ class SubSamplingImageTest {
     }
 
     // Wait for full-resolution tiles to load.
-    rule.waitUntil(5.seconds) { imageState.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed")
     }
@@ -234,8 +234,8 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = imageSource,
       )
-      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-        isImageDisplayed = imageState.isImageLoadedInFullQuality
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayed = imageState.isImageDisplayedInFullQuality
       }
 
       SubSamplingImage(
@@ -457,7 +457,7 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(5.seconds) { imageState.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -494,8 +494,8 @@ class SubSamplingImageTest {
       ).asReal().also {
         it.showTileBounds = true
       }
-      LaunchedEffect(imageState.isImageLoadedInFullQuality) {
-        isImageDisplayedInFullQuality = imageState.isImageLoadedInFullQuality
+      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
+        isImageDisplayedInFullQuality = imageState.isImageDisplayedInFullQuality
       }
 
       SubSamplingImage(
@@ -560,7 +560,7 @@ class SubSamplingImageTest {
       )
     }
 
-    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -568,7 +568,7 @@ class SubSamplingImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick(position = centerLeft)
     }
-    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -576,7 +576,7 @@ class SubSamplingImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       swipeLeft(startX = centerRight.x, endX = centerLeft.x)
     }
-    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
@@ -626,7 +626,7 @@ class SubSamplingImageTest {
     }
 
     previewBitmapMutex.unlock()
-    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_full_quality")
     }
@@ -658,7 +658,7 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(5.seconds) { state.isImageLoadedInFullQuality }
+    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }

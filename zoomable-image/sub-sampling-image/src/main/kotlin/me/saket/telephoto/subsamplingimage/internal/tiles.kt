@@ -46,7 +46,7 @@ internal data class ViewportTile private constructor(
 /**
  * This is kept separate from [ViewportTile] to optimize the drawing of the base tile.
  * The base tile may be present in the viewport but can be skipped during rendering if
- * it's covered by foreground tiles.
+ * it's entirely covered by foreground tiles.
  */
 @Immutable
 internal data class ViewportImageTile(

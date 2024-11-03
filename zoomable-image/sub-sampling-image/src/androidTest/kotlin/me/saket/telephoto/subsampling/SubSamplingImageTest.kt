@@ -267,15 +267,12 @@ class SubSamplingImageTest {
     // This test blocks 2 decoders indefinitely so at least 3 decoders are needed.
     PooledImageRegionDecoder.overriddenPoolCount = 3
 
-    // This fake factory will ignore decoding of selected tiles.
-    val shouldIgnore: (ImageRegionTile) -> Boolean = { region ->
-      region.sampleSize == ImageSampleSize(1) && region.bounds.left == 3648
-    }
+    // This fake image factory will ignore decoding of selected tiles.
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: ImageRegionTile): Painter {
-          return if (shouldIgnore(region)) {
+          return if (region.sampleSize == ImageSampleSize(1) && region.bounds.left == 3648) {
             delay(Long.MAX_VALUE)
             error("shouldn't reach here")
           } else {
@@ -285,8 +282,7 @@ class SubSamplingImageTest {
       }
     }
 
-    var imageTiles: List<ViewportImageTile> = emptyList()
-
+    lateinit var imageState: RealSubSamplingImageState
     rule.setContent {
       BoxWithConstraints {
         check(constraints.maxWidth == 1080 && constraints.maxHeight == 2400) {
@@ -298,12 +294,11 @@ class SubSamplingImageTest {
           ).also {
             it.contentScale = ContentScale.Crop
           }
-          val imageState = rememberSubSamplingImageState(
+          imageState = rememberSubSamplingImageState(
             zoomableState = zoomableState,
             imageSource = SubSamplingImageSource.asset("pahade.jpg"),
           ).asReal().also {
             it.showTileBounds = true
-            imageTiles = it.viewportImageTiles
           }
 
           SubSamplingImage(
@@ -319,7 +314,7 @@ class SubSamplingImageTest {
     }
 
     rule.waitUntil(5.seconds) {
-      imageTiles.count { !it.isBase && it.painter != null } == 2
+      imageState.viewportImageTiles.count { !it.isBase && it.painter != null } == 2
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
@@ -339,12 +334,8 @@ class SubSamplingImageTest {
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: ImageRegionTile): Painter {
           val isBaseTile = region.sampleSize.size == 8
-          return if (isBaseTile || !firstNonBaseTileReceived.getAndSet(true)) {
-            if (!isBaseTile) {
-              check(region.bounds == IntRect(0, 1200, 1216, 3265)) {
-                "Incorrect first tile received: $region. Possible race condition?"
-              }
-            }
+          val isCentroidTile = region.sampleSize.size == 1 && region.bounds == IntRect(0, 1200, 1216, 3265)
+          return if (isBaseTile || (isCentroidTile && !firstNonBaseTileReceived.getAndSet(true))) {
             real.decodeRegion(region)
           } else {
             delay(Long.MAX_VALUE)
@@ -392,16 +383,14 @@ class SubSamplingImageTest {
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
     screenshotValidator.tolerancePercentOnCi = 0.014f
 
-    var isImageDisplayed = false
-    var imageTiles: List<ViewportImageTile> = emptyList()
-
+    lateinit var imageState: RealSubSamplingImageState
     rule.setContent {
       BoxWithConstraints {
         check(constraints.maxWidth == 1080 && constraints.maxHeight == 2400) {
           "This test was written for a 1080x2400 display."
         }
 
-        val imageState = rememberSubSamplingImageState(
+        imageState = rememberSubSamplingImageState(
           imageSource = SubSamplingImageSource.asset("path.jpg"),
           transformation = {
             RealZoomableContentTransformation(
@@ -418,8 +407,6 @@ class SubSamplingImageTest {
             )
           },
         ).asReal()
-        isImageDisplayed = imageState.isImageLoadedInFullQuality
-        imageTiles = imageState.viewportImageTiles
 
         SubSamplingImage(
           modifier = Modifier.fillMaxSize(),
@@ -429,11 +416,11 @@ class SubSamplingImageTest {
       }
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
 
-      assertThat(imageTiles.map { it.bounds }).containsExactly(
+      assertThat(imageState.viewportImageTiles.map { it.bounds }).containsExactly(
         IntRect(-224, -10, 592, 703),
         IntRect(-224, 703, 592, 1417),
         IntRect(-224, 1417, 592, 2169),

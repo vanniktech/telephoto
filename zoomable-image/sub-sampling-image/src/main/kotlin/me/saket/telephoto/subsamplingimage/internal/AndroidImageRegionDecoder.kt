@@ -35,7 +35,7 @@ internal class AndroidImageRegionDecoder private constructor(
       inSampleSize = region.sampleSize.size
       inPreferredConfig = imageOptions.config.toAndroidConfig()
       if (Build.VERSION.SDK_INT >= 26) {
-        inPreferredColorSpace = imageOptions.colorSpace?.toAndroidColorSpace()
+        inPreferredColorSpace = imageOptions.androidColorSpace
       }
     }
 

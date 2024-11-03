@@ -52,7 +52,7 @@ internal class RealSubSamplingImageState(
 
   override val isImageDisplayed: Boolean by derivedStateOf {
     isReadyToBeDisplayed && viewportImageTiles.isNotEmpty() &&
-      (viewportImageTiles.fastAny { it.tile.isBase } || viewportImageTiles.fastAll { it.painter != null })
+      (viewportImageTiles.fastAny { it.isBase } || viewportImageTiles.fastAll { it.painter != null })
   }
 
   override val isImageDisplayedInFullQuality: Boolean by derivedStateOf {
@@ -124,22 +124,14 @@ internal class RealSubSamplingImageState(
     // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
     // a fallback. The base tile will hide again when all bitmaps have been loaded.
     val hasNoForeground = viewportTiles.fastAll { it.isBase }
-    val hasGapsInForeground = { viewportTiles.fastAny { !it.isBase && it.region !in loadedImages } }
+    val hasGapsInForeground = { viewportTiles.fastAny { !it.isBase && it.isVisible && it.region !in loadedImages } }
     val canDrawBaseTile = hasNoForeground || hasGapsInForeground()
 
     viewportTiles.fastMapNotNull { tile ->
-      if (tile.isVisible) {
+      if (tile.isVisible && (!tile.isBase || canDrawBaseTile)) {
         ViewportImageTile(
           tile = tile,
-          painter = if (tile.isBase) {
-            if (canDrawBaseTile) {
-              loadedImages[tile.region] ?: imagePreview
-            } else {
-              null
-            }
-          } else {
-            loadedImages[tile.region]
-          }
+          painter = loadedImages[tile.region] ?: if (tile.isBase) imagePreview else null,
         )
       } else null
     }.toImmutableList()

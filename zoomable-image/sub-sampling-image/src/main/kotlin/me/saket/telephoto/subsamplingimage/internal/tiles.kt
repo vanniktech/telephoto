@@ -50,7 +50,7 @@ internal data class ViewportTile private constructor(
  */
 @Immutable
 internal data class ViewportImageTile(
-  val tile: ViewportTile,
+  private val tile: ViewportTile,
   val painter: Painter?,
 ) {
   val bounds get() = tile.bounds

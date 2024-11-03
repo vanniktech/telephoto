@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import leakcanary.LeakAssertions
+import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.RealSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -678,6 +679,37 @@ class SubSamplingImageTest {
 
   @Test fun do_not_draw_any_tiles_until_all_of_the_visible_portion_of_the_image_can_be_shown() {
     TODO()
+  }
+
+
+  // Regression test for https://github.com/saket/telephoto/issues/110
+  @Test fun unknown_color_space() {
+    val bitmap = rule.activity.assets.open("grayscale.jpg").use {
+      BitmapFactory.decodeStream(it)
+    }
+
+    lateinit var imageState: SubSamplingImageState
+    rule.setContent {
+      val zoomableState = rememberZoomableState()
+      imageState = rememberSubSamplingImageState(
+        zoomableState = zoomableState,
+        imageSource = SubSamplingImageSource.asset("grayscale.jpg"),
+        imageOptions = ImageBitmapOptions(from = bitmap),
+      )
+
+      SubSamplingImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState),
+        state = imageState,
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity)
+    }
   }
 
   @Suppress("unused")

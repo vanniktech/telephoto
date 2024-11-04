@@ -31,7 +31,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -39,6 +38,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -135,7 +135,7 @@ class SubSamplingImageTest {
     }
 
     rule.waitUntil {
-      rule.onNodeWithTag("image").isImageDisplayed()
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
@@ -575,6 +575,7 @@ class SubSamplingImageTest {
 
   @Test fun preview_bitmap_should_not_be_rotated() {
     val previewBitmapMutex = Mutex(locked = true)
+    var fullImageDecoded = false
 
     val gatedDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
@@ -582,6 +583,8 @@ class SubSamplingImageTest {
         override suspend fun decodeRegion(region: ImageRegionTile): Painter {
           return previewBitmapMutex.withLock {
             real.decodeRegion(region)
+          }.also {
+            fullImageDecoded = true
           }
         }
       }
@@ -616,9 +619,8 @@ class SubSamplingImageTest {
     }
 
     previewBitmapMutex.unlock()
-    rule.waitUntil {
-      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
-    }
+
+    rule.waitUntil { fullImageDecoded }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_full_quality")
     }

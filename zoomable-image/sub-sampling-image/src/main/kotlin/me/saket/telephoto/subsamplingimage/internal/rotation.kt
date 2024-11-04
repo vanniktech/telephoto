@@ -3,13 +3,13 @@
 package me.saket.telephoto.subsamplingimage.internal
 
 import android.graphics.Matrix
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
 import kotlin.LazyThreadSafetyMode.NONE
-import kotlin.math.roundToInt
 
 /**
  * Calculate the position of this rectangle inside [unRotatedParent]
@@ -76,8 +76,6 @@ internal inline fun createRotationMatrix(
 ): Matrix {
   matrix.reset()
 
-  // Calculate a scale to fill the bounds. For rotated orientations (90, 270),
-  // the width/height will be swapped since the bitmap will be rotated.
   val rotationDegrees = when (orientation) {
     ImageOrientation.None -> 0f
     ImageOrientation.Orientation90 -> 90f
@@ -85,43 +83,38 @@ internal inline fun createRotationMatrix(
     ImageOrientation.Orientation270 -> 270f
   }
 
+  // Calculate points for rotation around the image's center.
+  val bitmapCenter = Offset(
+    x = bitmapSize.width / 2f,
+    y = bitmapSize.height / 2f,
+  )
+
+  // Post* matrix operations happen in reverse order, so reading bottom to top:
+  // 1. Translate to the center of the destination bounds
+  // 2. Scale to fill bounds
+  // 3. Rotate by required degrees
+  // 4. Translate to origin for centering
+  matrix.postTranslate(-bitmapCenter.x, -bitmapCenter.y)        // 4.
+  matrix.postRotate(rotationDegrees)                            // 3.
+
   // Calculate scale to fill bounds completely (based on rotated dimensions).
   // This scale happens from (0,0). This ensures a uniform scaling before any
   // translations that could affect the scale ratios.
   val rotatedSize = if (rotationDegrees % 180 == 0f) bitmapSize else bitmapSize.flip()
-  val scaleX = bounds.width / rotatedSize.width
-  val scaleY = bounds.height / rotatedSize.height
-  matrix.postScale(scaleX, scaleY)
-
-  // Calculate points for rotation around the image's center.
-  val bitmapCenterX = (bitmapSize.width * scaleX / 2f).round()
-  val bitmapCenterY = (bitmapSize.height * scaleY / 2f).round()
-
-  // Post* matrix operations happen in reverse order, so reading bottom to top:
-  // 1. Translate to final bounds center
-  // 2. Rotate by required degrees
-  // 3. Translate to origin for rotation around center
-  // (The scale operation was already done first, above)
-
-  matrix.postTranslate(-bitmapCenterX, -bitmapCenterY)  // 3.
-  matrix.postRotate(rotationDegrees)  // 2.
+  matrix.postScale(                                             // 2.
+    bounds.width / rotatedSize.width,
+    bounds.height / rotatedSize.height
+  )
 
   val left = 0f
   val top = 0f
-  matrix.postTranslate( // 1.
-    (left + bounds.width / 2f).round(),
-    (top + bounds.height / 2f).round()
+  matrix.postTranslate(
+    // 1.
+    (left + bounds.width) / 2f,
+    (top + bounds.height) / 2f,
   )
 
   return matrix
-}
-
-/**
- * Used for matching the precise calculations of Bitmap.createBitmap()
- * when it's used for creating rotated bitmaps.
- */
-private inline fun Float.round(): Float {
-  return roundToInt().toFloat()
 }
 
 private fun IntOffset.flip(): IntOffset = IntOffset(x = y, y = x)

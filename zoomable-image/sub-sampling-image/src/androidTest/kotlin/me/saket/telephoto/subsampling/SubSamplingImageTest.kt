@@ -109,6 +109,7 @@ class SubSamplingImageTest {
 
   @After
   fun tearDown() {
+    PooledImageRegionDecoder.overriddenPoolCount = null
     LeakAssertions.assertNoLeaks()
   }
 

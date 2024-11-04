@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +31,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -60,7 +60,6 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionTile
 import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
 import me.saket.telephoto.subsamplingimage.internal.LocalImageRegionDecoderFactory
 import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
-import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.util.CiScreenshotValidator
@@ -116,31 +115,27 @@ class SubSamplingImageTest {
   @Test fun various_image_sources(
     @TestParameter imageSource: ImageSourceParam
   ) {
-    var isImageDisplayed = false
-
     rule.setContent {
       val zoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 1f)
       )
       val context = LocalContext.current
-      val imageState = rememberSubSamplingImageState(
-        zoomableState = zoomableState,
-        imageSource = remember { imageSource.source(context) }
-      )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
-      }
-
       SubSamplingImage(
         modifier = Modifier
           .fillMaxSize()
-          .zoomable(zoomableState),
-        state = imageState,
+          .zoomable(zoomableState)
+          .testTag("image"),
+        state = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = remember { imageSource.source(context) }
+        ),
         contentDescription = null,
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayed()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -150,30 +145,26 @@ class SubSamplingImageTest {
     @TestParameter layoutSize: LayoutSizeParam,
     @TestParameter imageSize: ImageSizeParam,
   ) {
-    var isImageDisplayed = false
-
     rule.setContent {
       val zoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 1f)
       )
-      val imageState = rememberSubSamplingImageState(
-        zoomableState = zoomableState,
-        imageSource = imageSize.source,
-      )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
-      }
-
       SubSamplingImage(
         modifier = layoutSize.modifier
           .zoomable(zoomableState)
-          .border(1.dp, Color.Yellow),
-        state = imageState,
+          .border(1.dp, Color.Yellow)
+          .testTag("image"),
+        state = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = imageSize.source,
+        ),
         contentDescription = null,
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -183,30 +174,28 @@ class SubSamplingImageTest {
     @TestParameter alignment: AlignmentParam,
     @TestParameter size: LayoutSizeParam,
   ) {
-    lateinit var imageState: RealSubSamplingImageState
-
     rule.setContent {
       val zoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 1f)
       ).also {
         it.contentAlignment = alignment.value
       }
-      imageState = rememberSubSamplingImageState(
-        zoomableState = zoomableState,
-        imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-      ).asReal()
-
       SubSamplingImage(
         modifier = Modifier
           .then(size.modifier)
           .zoomable(zoomableState)
           .testTag("image"),
-        state = imageState,
+        state = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+        ),
         contentDescription = null,
       )
     }
 
-    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -215,15 +204,15 @@ class SubSamplingImageTest {
       doubleClick()
     }
 
-    // Wait for full-resolution tiles to load.
-    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_zoomed")
     }
   }
 
   @Test fun updating_of_image_works() {
-    var isImageDisplayed = false
     var imageSource by mutableStateOf(SubSamplingImageSource.asset("smol.jpg"))
 
     rule.setContent {
@@ -234,24 +223,25 @@ class SubSamplingImageTest {
         zoomableState = zoomableState,
         imageSource = imageSource,
       )
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayed = imageState.isImageDisplayedInFullQuality
-      }
 
       SubSamplingImage(
         modifier = Modifier
           .fillMaxSize()
-          .zoomable(zoomableState),
+          .zoomable(zoomableState)
+          .testTag("image"),
         state = imageState,
         contentDescription = null,
       )
     }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
 
     imageSource = SubSamplingImageSource.asset("path.jpg")
 
-    rule.waitUntil { !isImageDisplayed }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -282,7 +272,6 @@ class SubSamplingImageTest {
       }
     }
 
-    lateinit var imageState: RealSubSamplingImageState
     rule.setContent {
       BoxWithConstraints {
         check(constraints.maxWidth == 1080 && constraints.maxHeight == 2400) {
@@ -294,19 +283,18 @@ class SubSamplingImageTest {
           ).also {
             it.contentScale = ContentScale.Crop
           }
-          imageState = rememberSubSamplingImageState(
-            zoomableState = zoomableState,
-            imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-          ).asReal().also {
-            it.showTileBounds = true
-          }
 
           SubSamplingImage(
             modifier = Modifier
               .fillMaxSize()
               .zoomable(zoomableState)
               .testTag("image"),
-            state = imageState,
+            state = rememberSubSamplingImageState(
+              zoomableState = zoomableState,
+              imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+            ).asReal().also {
+              it.showTileBounds = true
+            },
             contentDescription = null,
           )
         }
@@ -314,7 +302,8 @@ class SubSamplingImageTest {
     }
 
     rule.waitUntil(5.seconds) {
-      imageState.viewportImageTiles.count { !it.isBase && it.painter != null } == 2
+      val tiles = rule.onNodeWithTag("image").viewportImageTiles()
+      tiles != null && tiles.count { !it.isBase && it.painter != null } == 2
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
@@ -345,23 +334,20 @@ class SubSamplingImageTest {
       }
     }
 
-    var imageTiles: List<ViewportImageTile> = emptyList()
     rule.setContent {
       CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
         val zoomableState = rememberZoomableState()
-        val imageState = rememberSubSamplingImageState(
-          zoomableState = zoomableState,
-          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-        ).asReal().also {
-          it.showTileBounds = true
-          imageTiles = it.viewportImageTiles
-        }
         SubSamplingImage(
           modifier = Modifier
             .fillMaxSize()
             .zoomable(zoomableState)
             .testTag("image"),
-          state = imageState,
+          state = rememberSubSamplingImageState(
+            zoomableState = zoomableState,
+            imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+          ).asReal().also {
+            it.showTileBounds = true
+          },
           contentDescription = null,
         )
       }
@@ -370,10 +356,9 @@ class SubSamplingImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick(position = centerLeft + Offset(100f, 0f))
     }
-    rule.runOnIdle {
-      rule.waitUntil(5.seconds) {
-        imageTiles.count { !it.isBase && it.painter != null } == 1
-      }
+    rule.waitUntil(5.seconds) {
+      val tiles = rule.onNodeWithTag("image").viewportImageTiles()
+      tiles != null && tiles.count { !it.isBase && it.painter != null } == 1
     }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
@@ -383,14 +368,13 @@ class SubSamplingImageTest {
   @Test fun up_scaled_tiles_should_not_have_gaps_due_to_precision_loss() {
     screenshotValidator.tolerancePercentOnCi = 0.014f
 
-    lateinit var imageState: RealSubSamplingImageState
     rule.setContent {
       BoxWithConstraints {
         check(constraints.maxWidth == 1080 && constraints.maxHeight == 2400) {
           "This test was written for a 1080x2400 display."
         }
 
-        imageState = rememberSubSamplingImageState(
+        val imageState = rememberSubSamplingImageState(
           imageSource = SubSamplingImageSource.asset("path.jpg"),
           transformation = {
             RealZoomableContentTransformation(
@@ -406,42 +390,41 @@ class SubSamplingImageTest {
               centroid = Offset.Zero,
             )
           },
-        ).asReal()
+        )
 
         SubSamplingImage(
-          modifier = Modifier.fillMaxSize(),
+          modifier = Modifier
+            .fillMaxSize()
+            .testTag("image"),
           state = imageState,
           contentDescription = null,
         )
       }
     }
 
-    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
-
-      assertThat(imageState.viewportImageTiles.map { it.bounds }).containsExactly(
-        IntRect(-224, -10, 592, 703),
-        IntRect(-224, 703, 592, 1417),
-        IntRect(-224, 1417, 592, 2169),
-        IntRect(592, -10, 1409, 703),
-        IntRect(592, 703, 1409, 1417),
-        IntRect(592, 1417, 1409, 2169),
-      )
     }
+
+    val imageTiles = rule.onNodeWithTag("image").viewportImageTiles()!!
+    assertThat(imageTiles.map { it.bounds }).containsExactly(
+      IntRect(-224, -10, 592, 703),
+      IntRect(-224, 703, 592, 1417),
+      IntRect(-224, 1417, 592, 2169),
+      IntRect(592, -10, 1409, 703),
+      IntRect(592, 703, 1409, 1417),
+      IntRect(592, 1417, 1409, 2169),
+    )
   }
 
   @Test fun center_aligned_and_wrap_content() {
-    lateinit var imageState: SubSamplingImageState
     rule.setContent {
       val zoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 2f)
       )
-      imageState = rememberSubSamplingImageState(
-        zoomableState = zoomableState,
-        imageSource = SubSamplingImageSource.asset("fox_1000.jpg"),
-      )
-
       Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -451,13 +434,18 @@ class SubSamplingImageTest {
             .wrapContentSize()
             .zoomable(zoomableState)
             .testTag("image"),
-          state = imageState,
+          state = rememberSubSamplingImageState(
+            zoomableState = zoomableState,
+            imageSource = SubSamplingImageSource.asset("fox_1000.jpg"),
+          ),
           contentDescription = null,
         )
       }
     }
 
-    rule.waitUntil(5.seconds) { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -482,33 +470,29 @@ class SubSamplingImageTest {
   ) {
     screenshotValidator.tolerancePercentOnCi = 0.1f
 
-    var isImageDisplayedInFullQuality = false
-
     rule.setContent {
       val zoomableState = rememberZoomableState(
         zoomSpec = ZoomSpec(maxZoomFactor = 1f)
       )
-      val imageState = rememberSubSamplingImageState(
-        zoomableState = zoomableState,
-        imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-      ).asReal().also {
-        it.showTileBounds = true
-      }
-      LaunchedEffect(imageState.isImageDisplayedInFullQuality) {
-        isImageDisplayedInFullQuality = imageState.isImageDisplayedInFullQuality
-      }
 
       SubSamplingImage(
         modifier = Modifier
           .then(size.modifier)
           .zoomable(zoomableState)
           .testTag("image"),
-        state = imageState,
+        state = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+        ).asReal().also {
+          it.showTileBounds = true
+        },
         contentDescription = null,
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.onNodeWithTag("image").performTouchInput {
       pinch(
         start0 = center,
@@ -517,7 +501,9 @@ class SubSamplingImageTest {
         end1 = center + Offset(0f, 1f),
       )
     }
-    rule.waitUntil(5.seconds) { isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -539,8 +525,6 @@ class SubSamplingImageTest {
       throw AssumptionViolatedException("Skipping $alignment")
     }
 
-    lateinit var state: SubSamplingImageState
-
     rule.setContent {
       val zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 2.5f)).also {
         it.contentScale = contentScale.value
@@ -555,12 +539,14 @@ class SubSamplingImageTest {
         state = rememberSubSamplingImageState(
           zoomableState = zoomableState,
           imageSource = SubSamplingImageSource.asset(imageAsset.assetName),
-        ).also { state = it },
+        ),
         contentDescription = null,
       )
     }
 
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -568,7 +554,9 @@ class SubSamplingImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       doubleClick(position = centerLeft)
     }
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed")
     }
@@ -576,7 +564,9 @@ class SubSamplingImageTest {
     rule.onNodeWithTag("image").performTouchInput {
       swipeLeft(startX = centerRight.x, endX = centerLeft.x)
     }
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_zoomed_panned")
     }
@@ -584,7 +574,6 @@ class SubSamplingImageTest {
 
   @Test fun preview_bitmap_should_not_be_rotated() {
     val previewBitmapMutex = Mutex(locked = true)
-    lateinit var state: SubSamplingImageState
 
     val gatedDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
@@ -612,28 +601,29 @@ class SubSamplingImageTest {
           state = rememberSubSamplingImageState(
             zoomableState = zoomableState,
             imageSource = SubSamplingImageSource.asset("bellagio_rotated_by_90.jpg", preview = previewBitmap),
-          ).also {
-            state = it
-          },
+          ),
           contentDescription = null,
         )
       }
     }
 
-    rule.waitUntil(5.seconds) { state.isImageDisplayed }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayed()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_preview")
     }
 
     previewBitmapMutex.unlock()
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, name = testName.methodName + "_full_quality")
     }
   }
 
   @Test fun wrap_content_size_in_a_vertically_infinite_layout() {
-    lateinit var state: SubSamplingImageState
     rule.setContent {
       val zoomableState = rememberZoomableState(ZoomSpec(maxZoomFactor = 2.5f))
 
@@ -652,13 +642,15 @@ class SubSamplingImageTest {
           state = rememberSubSamplingImageState(
             zoomableState = zoomableState,
             imageSource = SubSamplingImageSource.asset("pahade.jpg"),
-          ).also { state = it },
+          ),
           contentDescription = null,
         )
       }
     }
 
-    rule.waitUntil(5.seconds) { state.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }
@@ -674,25 +666,25 @@ class SubSamplingImageTest {
       BitmapFactory.decodeStream(it)
     }
 
-    lateinit var imageState: SubSamplingImageState
     rule.setContent {
       val zoomableState = rememberZoomableState()
-      imageState = rememberSubSamplingImageState(
-        zoomableState = zoomableState,
-        imageSource = SubSamplingImageSource.asset("grayscale.jpg"),
-        imageOptions = ImageBitmapOptions(from = bitmap),
-      )
-
       SubSamplingImage(
         modifier = Modifier
           .fillMaxSize()
-          .zoomable(zoomableState),
-        state = imageState,
+          .zoomable(zoomableState)
+          .testTag("image"),
+        state = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = SubSamplingImageSource.asset("grayscale.jpg"),
+          imageOptions = ImageBitmapOptions(from = bitmap),
+        ),
         contentDescription = null,
       )
     }
 
-    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayedInFullQuality()
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity)
     }

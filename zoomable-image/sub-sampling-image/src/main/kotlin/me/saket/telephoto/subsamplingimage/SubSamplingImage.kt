@@ -28,7 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.util.fastForEach
+import me.saket.telephoto.subsamplingimage.internal.SubSamplingImageSemanticState
 import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
+import me.saket.telephoto.subsamplingimage.internal.imageSemanticState
 import me.saket.telephoto.subsamplingimage.internal.toCeilInt
 
 /**
@@ -70,11 +72,18 @@ fun SubSamplingImage(
   }
 
   Box(
-    modifier = modifier
+    modifier
       .contentDescription(contentDescription)
       .drawBehind(onDraw)
       .onSizeChanged { state.viewportSize = it }
       .wrapContentSizeIfNeeded(state.imageSize)
+      .semantics {
+        this.imageSemanticState = SubSamplingImageSemanticState(
+          isImageDisplayed = state.isImageDisplayed,
+          isImageDisplayedInFullQuality = state.isImageDisplayedInFullQuality,
+          tiles = state.viewportImageTiles,
+        )
+      }
   )
 }
 

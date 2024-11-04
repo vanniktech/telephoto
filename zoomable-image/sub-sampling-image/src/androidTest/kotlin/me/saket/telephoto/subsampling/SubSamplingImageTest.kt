@@ -691,6 +691,32 @@ class SubSamplingImageTest {
     }
   }
 
+  @Test fun raw_stream_works_with_multiple_decoders() {
+    PooledImageRegionDecoder.overriddenPoolCount = 2
+
+    rule.setContent {
+      val zoomableState = rememberZoomableState()
+      val context = LocalContext.current
+      SubSamplingImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .zoomable(zoomableState)
+          .testTag("image"),
+        state = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = remember {
+            SubSamplingImageSource.rawSource({ context.assets.open("path.jpg").source() })
+          }
+        ),
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil {
+      rule.onNodeWithTag("image").isImageDisplayed()
+    }
+  }
+
   @Suppress("unused")
   enum class LayoutSizeParam(val modifier: Modifier) {
     FillMaxSize(Modifier.fillMaxSize()),

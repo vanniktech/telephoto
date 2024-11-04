@@ -19,7 +19,6 @@ import okio.Path.Companion.toPath
 import okio.Source
 import okio.buffer
 import okio.source
-import java.io.FileInputStream
 import java.io.InputStream
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -186,7 +185,7 @@ internal data class AssetImageSource(
 
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
     return inputStream(context).use { stream ->
-      check (stream is AssetManager.AssetInputStream) {
+      check(stream is AssetManager.AssetInputStream) {
         error("BitmapRegionDecoder won't be able to optimize reading of this asset")
       }
       @Suppress("DEPRECATION")
@@ -260,13 +259,17 @@ internal data class RawImageSource(
   }
 
   override suspend fun decoder(context: Context): BitmapRegionDecoder {
-    return bufferedSource.inputStream().use { stream ->
+    // This uses a peeking source because the image source can be decoded
+    // by multiple decoders in parallel. A downside of this is that the
+    // upstream source will never be consumed, which is probably okay?
+    return peek(context).inputStream().use { stream ->
       @Suppress("DEPRECATION")
       BitmapRegionDecoder.newInstance(stream, /* ignored */ false)!!
     }
   }
 
   override fun close() {
+    bufferedSource.close()
     onClose?.close()
   }
 }

@@ -14,8 +14,9 @@ import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil3.ImageLoader
-import coil3.compose.DefaultModelEqualityDelegate
-import coil3.compose.EqualityDelegate
+import coil3.annotation.ExperimentalCoilApi
+import coil3.compose.AsyncImageModelEqualityDelegate
+import coil3.compose.LocalAsyncImageModelEqualityDelegate
 import coil3.imageLoader
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomableImage
@@ -103,11 +104,12 @@ fun ZoomableAsyncImage(
  * ```
  */
 @Composable
+@OptIn(ExperimentalCoilApi::class)
 fun ZoomableImageSource.Companion.coil(
   model: Any?,
   imageLoader: ImageLoader = LocalContext.current.imageLoader
 ): ZoomableImageSource {
-  val model = StableModel(model, equalityDelegate = DefaultModelEqualityDelegate)
+  val model = StableModel(model, equalityDelegate = LocalAsyncImageModelEqualityDelegate.current)
   return remember(model, imageLoader) {
     Coil3ImageSource(model.model, imageLoader)
   }
@@ -118,9 +120,10 @@ fun ZoomableImageSource.Companion.coil(
  * `ImageRequest#listener`, `placeholder` or `target` change.
  */
 @Stable
+@OptIn(ExperimentalCoilApi::class)
 private class StableModel(
   val model: Any?,
-  private val equalityDelegate: EqualityDelegate,
+  private val equalityDelegate: AsyncImageModelEqualityDelegate,
 ) {
   override fun equals(other: Any?): Boolean =
     equalityDelegate.equals(model, (other as? StableModel)?.model)

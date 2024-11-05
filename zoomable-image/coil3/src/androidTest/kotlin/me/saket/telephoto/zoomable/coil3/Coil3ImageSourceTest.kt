@@ -1,4 +1,4 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+@file:Suppress("INVISIBLE_MEMBER")
 @file:OptIn(DelicateCoilApi::class)
 
 package me.saket.telephoto.zoomable.coil3

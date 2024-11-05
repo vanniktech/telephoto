@@ -1,6 +1,5 @@
-package me.saket.telephoto.zoomable.coil
+package me.saket.telephoto.subsamplingimage.internal
 
-import coil.decode.DecodeUtils
 import okio.BufferedSource
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -19,9 +18,8 @@ private val GIF_HEADER_89A = "GIF89a".encodeUtf8()
  *
  * NOTE: There's no guaranteed method to determine if a byte stream is an SVG without attempting
  * to decode it. This method uses heuristics.
-*/
-@Suppress("UnusedReceiverParameter")
-internal fun DecodeUtils.isSvg(source: BufferedSource): Boolean {
+ */
+internal fun isSvg(source: BufferedSource): Boolean {
   return source.rangeEquals(0, LEFT_ANGLE_BRACKET) &&
     source.indexOf(SVG_TAG, 0, 1024) != -1L
 }
@@ -31,8 +29,7 @@ internal fun DecodeUtils.isSvg(source: BufferedSource): Boolean {
  *
  * Return 'true' if the [source] contains a GIF image. The [source] is not consumed.
  */
-@Suppress("UnusedReceiverParameter")
-internal fun DecodeUtils.isGif(source: BufferedSource): Boolean {
+internal fun isGif(source: BufferedSource): Boolean {
   return source.rangeEquals(0, GIF_HEADER_89A) ||
     source.rangeEquals(0, GIF_HEADER_87A)
 }

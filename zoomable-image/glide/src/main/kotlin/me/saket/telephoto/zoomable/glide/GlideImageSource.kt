@@ -27,6 +27,7 @@ import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
+import me.saket.telephoto.zoomable.copy
 import me.saket.telephoto.zoomable.internal.RememberWorker
 import okio.Path
 import okio.Path.Companion.toOkioPath
@@ -34,7 +35,6 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import me.saket.telephoto.zoomable.glide.Size as GlideSize
-import me.saket.telephoto.zoomable.internal.copy
 
 internal class GlideImageSource(
   private val requestManager: RequestManager,

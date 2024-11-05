@@ -109,7 +109,6 @@ import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
-import me.saket.telephoto.zoomable.internal.copy
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule

@@ -32,12 +32,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
+import me.saket.telephoto.subsamplingimage.internal.canBeSubSampled
+import me.saket.telephoto.subsamplingimage.internal.exists
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.coil3.Resolver.ImageSourceCreationResult.EligibleForSubSampling
 import me.saket.telephoto.zoomable.coil3.Resolver.ImageSourceCreationResult.ImageDeletedOnlyFromDiskCache
+import me.saket.telephoto.zoomable.copy
 import me.saket.telephoto.zoomable.internal.RememberWorker
-import me.saket.telephoto.zoomable.internal.copy
 import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -193,7 +195,7 @@ internal class Resolver(
           result.request.mapRequestDataToUriOrNull()
             ?.let { uri -> SubSamplingImageSource.contentUriOrNull(uri, preview) }
             ?.also {
-              if (result.dataSource == DataSource.MEMORY_CACHE && !it.exists()) {
+              if (result.dataSource == DataSource.MEMORY_CACHE && !it.exists(request.context)) {
                 return ImageDeletedOnlyFromDiskCache
               }
             }
@@ -209,7 +211,7 @@ internal class Resolver(
     } else {
       return null
     }
-    return if (source?.canBeSubSampled() == true) EligibleForSubSampling(source) else null
+    return if (source?.canBeSubSampled(request.context) == true) EligibleForSubSampling(source) else null
   }
 
   private fun ImageResult.crossfadeDuration(): Duration {

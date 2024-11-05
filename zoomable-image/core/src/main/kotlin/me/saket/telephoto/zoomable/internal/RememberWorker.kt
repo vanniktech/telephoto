@@ -17,11 +17,13 @@ internal abstract class RememberWorker : RememberObserver {
     scope!!.launch { work() }
   }
 
-  override fun onAbandoned() {
+  override fun onForgotten() {
     scope?.cancel()
   }
 
-  override fun onForgotten() {
-    scope?.cancel()
+  override fun onAbandoned() {
+    check(scope == null) {
+      "onRemembered() shouldn't have been called as per RememberObserver's documentation"
+    }
   }
 }

@@ -86,13 +86,6 @@ internal class Resolver(
   }
 
   private suspend fun work(skipMemoryCache: Boolean) {
-    val imageLoader: ImageLoader = imageLoader
-      .newBuilder()
-      // Ignore "no-store" http headers if they're present and always cache images to disk. Otherwise,
-      // telephoto will be unable to sub-sample large images directly from coil's memory cache.
-      //.respectCacheHeaders(false) // todo: how do I do this with coil3?
-      .build()
-
     val result = imageLoader.execute(
       request.newBuilder()
         .size(request.defined.sizeResolver ?: sizeResolver)
@@ -127,9 +120,9 @@ internal class Resolver(
             else -> Precision.INEXACT
           }
         )
-        // todo: should coil spend any time doing this?
-        //  counter-arg: i might want to enable sub-sampling only if the bitmap size exceeds the display size.
-        //  counter-counter-arg: if CacheControlCacheStrategy is used and the image isn't saved to disk, it's better to display a smaller image without sub-sampling.
+        // While telephoto will take care of loading the full-sized image, let Coil downsize
+        // this image since there is still a possibility that the image may not be saved to
+        // disk if (e.g., if Cache-Control HTTP headers prevent disk caching).
         .maxBitmapSize(CoilSize.ORIGINAL)
         .build()
     )

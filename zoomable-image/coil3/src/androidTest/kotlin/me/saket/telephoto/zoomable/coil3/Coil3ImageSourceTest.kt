@@ -43,6 +43,7 @@ import coil3.asImage
 import coil3.gif.AnimatedImageDecoder
 import coil3.imageLoader
 import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
@@ -51,6 +52,7 @@ import coil3.request.bitmapConfig
 import coil3.request.colorSpace
 import coil3.request.crossfade
 import coil3.request.error
+import coil3.serviceLoaderEnabled
 import coil3.size.Dimension
 import coil3.svg.SvgDecoder
 import coil3.test.FakeImageLoaderEngine
@@ -222,7 +224,9 @@ class Coil3ImageSourceTest {
         assertThat(delegate.source.preview).isNotNull()
         assertThat(delegate.imageOptions).isEqualTo(
           ImageBitmapOptions(
-            config = ImageBitmapConfig.Rgb565,
+            // TODO: https://github.com/coil-kt/coil/discussions/2641
+            //config = ImageBitmapConfig.Rgb565,
+            config = ImageBitmapConfig.Argb8888,
             colorSpace = ColorSpaces.Srgb,
           )
         )
@@ -335,11 +339,17 @@ class Coil3ImageSourceTest {
       SvgRequestDataParam.RemoteUrl -> serverRule.server.url("emoji.svg").toString()
       else -> requestData.data(context)
     }
+
     SingletonImageLoader.setUnsafe(
       ImageLoader.Builder(context)
+        // Prevent Coil from auto-adding SvgDecoder because it's present on the classpath.
+        .serviceLoaderEnabled(false)
         .components {
           when (decodingState) {
-            SvgDecodingEnabled -> add(SvgDecoder.Factory())
+            SvgDecodingEnabled -> {
+              add(OkHttpNetworkFetcherFactory())
+              add(SvgDecoder.Factory())
+            }
             SvgDecodingDisabled -> Unit
           }
         }
@@ -430,8 +440,11 @@ class Coil3ImageSourceTest {
   ) = runTest {
     SingletonImageLoader.setUnsafe(
       ImageLoader.Builder(context)
-        .components { add(AnimatedImageDecoder.Factory()) }  // For GIFs.
         .build()
+        .also { builder ->
+          // Coil will auto-add AnimatedImageDecoder because it exists on the classpath.
+          check(builder.components.decoderFactories.any { it is AnimatedImageDecoder.Factory })
+        }
     )
 
     resolve {

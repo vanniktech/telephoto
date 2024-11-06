@@ -25,6 +25,7 @@ import coil3.request.transitionFactory
 import coil3.size.Dimension
 import coil3.size.Precision
 import coil3.size.SizeResolver
+import coil3.toAndroidUri
 import coil3.transition.CrossfadeTransition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -160,7 +161,9 @@ internal class Resolver(
   }
 
   private sealed interface ImageSourceCreationResult {
-    data class EligibleForSubSampling(val source: SubSamplingImageSource) : ImageSourceCreationResult
+    data class EligibleForSubSampling(
+      val source: SubSamplingImageSource
+    ) : ImageSourceCreationResult
 
     /** Image was deleted from the disk cache, but is still present in the memory cache. */
     data object ImageDeletedOnlyFromDiskCache : ImageSourceCreationResult
@@ -176,7 +179,7 @@ internal class Resolver(
         // it is significantly faster than reading from their input streams.
         result.diskCacheKey != null -> {
           val diskCache = imageLoader.diskCache!!
-          val snapshot = withContext(Dispatchers.IO) {  // IO because openSnapshot() can delete files.
+          val snapshot = withContext(Dispatchers.IO) {  // IO because openSnapshot can delete files.
             diskCache.openSnapshot(result.diskCacheKey!!)
           }
           if (snapshot == null) {
@@ -211,7 +214,11 @@ internal class Resolver(
     } else {
       return null
     }
-    return if (source?.canBeSubSampled(request.context) == true) EligibleForSubSampling(source) else null
+    return if (source?.canBeSubSampled(request.context) == true) {
+      EligibleForSubSampling(source)
+    } else {
+      null
+    }
   }
 
   private fun ImageResult.crossfadeDuration(): Duration {
@@ -227,10 +234,11 @@ internal class Resolver(
   }
 
   private fun ImageRequest.mapRequestDataToUriOrNull(): Uri? {
-    val dummyOptions = Options(request.context) // Good enough for mappers that only use the context.
+    val dummyOptions = Options(request.context) // Good enough for mappers that only use Context.
     return when (val mapped = imageLoader.components.map(data, dummyOptions)) {
       is Uri -> mapped
       is File -> Uri.parse(mapped.path)
+      is coil3.Uri -> mapped.toAndroidUri()
       else -> null
     }
   }

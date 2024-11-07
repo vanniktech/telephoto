@@ -209,7 +209,7 @@ class Coil3ImageSourceTest {
     }
   }
 
-  @Test fun correctly_read_crossfade_duration_and_bitmap_options() = runTest {
+  @Test fun correctly_read_crossfade_duration_and_bitmap_options_from_image_request() = runTest {
     resolve {
       ImageRequest.Builder(context)
         .data(serverRule.server.url("full_image.png").toString())
@@ -231,6 +231,24 @@ class Coil3ImageSourceTest {
           )
         )
         assertThat(crossfadeDuration).isEqualTo(9.seconds)
+      }
+    }
+  }
+
+  @Test fun correctly_read_crossfade_duration_from_image_loader() = runTest {
+    val currentLoader = SingletonImageLoader.get(context)
+    SingletonImageLoader.setUnsafe {
+      currentLoader.newBuilder()
+        .crossfade(789)
+        .build()
+    }
+
+    resolve {
+      serverRule.server.url("full_image.png").toString()
+    }.test {
+      skipItems(1) // Default item.
+      with(awaitItem()) {
+        assertThat(crossfadeDuration).isEqualTo(789.milliseconds)
       }
     }
   }

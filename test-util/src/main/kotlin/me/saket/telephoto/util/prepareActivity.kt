@@ -1,6 +1,7 @@
 package me.saket.telephoto.util
 
 import android.app.Activity
+import android.content.res.Configuration
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.view.WindowManager
@@ -33,7 +34,12 @@ fun Activity.prepareForScreenshotTest() {
   }
 
   window.decorView.doOnNextLayout {
-    check (Build.VERSION.SDK_INT == 31 && it.width == 1080 && it.height == 2400) {
+    val isExpectedSize = when (val orientation = resources.configuration.orientation) {
+      Configuration.ORIENTATION_PORTRAIT -> it.width == 1080 && it.height == 2400
+      Configuration.ORIENTATION_LANDSCAPE -> it.width == 2400 && it.height == 1080
+      else -> error("invalid orientation = $orientation")
+    }
+    check (Build.VERSION.SDK_INT == 31 && isExpectedSize) {
       "telephoto's test screenshots were generated on an API 31 device with a 1080 x 2400 display/window size."
     }
   }

@@ -2,6 +2,8 @@
 
 package me.saket.telephoto.zoomable
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.view.KeyEvent
 import android.view.ViewConfiguration
@@ -81,7 +83,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.test.runner.lifecycle.ActivityLifecycleCallback
 import assertk.all
 import assertk.assertThat
 import assertk.assertions.isCloseTo
@@ -1487,6 +1493,47 @@ class ZoomableImageTest {
     rule.runOnIdle {
       assertThat(doubleClicked).isFalse()
       assertThat(imageState.zoomableState.zoomFraction ?: 0f).isEqualTo(0f)
+    }
+  }
+
+  @Test fun transformations_are_retained_after_orientation_change() {
+    lateinit var imageState: ZoomableImageState
+
+    rule.setContent {
+      imageState = rememberZoomableImageState(
+        rememberZoomableState(ZoomSpec(maxZoomFactor = 3f))
+      )
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        state = imageState,
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    (rule.onNodeWithTag("image")).run {
+      performTouchInput { doubleClick(center) }
+      performTouchInput { swipe(RightToLeft) }
+    }
+    rule.runOnIdle {
+      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_rotation]")
+    }
+
+    rule.runOnUiThread {
+      assertThat(rule.activity.resources.configuration.orientation).isEqualTo(Configuration.ORIENTATION_PORTRAIT)
+      rule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+    }
+    rule.runOnIdle {
+      rule.activity.prepareForScreenshotTest()
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
     }
   }
 

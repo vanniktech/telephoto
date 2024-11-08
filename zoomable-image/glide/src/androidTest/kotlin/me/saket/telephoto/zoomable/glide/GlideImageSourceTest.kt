@@ -2,7 +2,6 @@ package me.saket.telephoto.zoomable.glide
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -41,8 +40,8 @@ import kotlinx.coroutines.withContext
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
+import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.compositionLocalProviderReturnable
-import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
@@ -73,7 +72,7 @@ import kotlin.time.Duration.Companion.seconds
 /** Note to self: this should ideally be a junit test, but Glide was unable to decode HTTP responses in a fake environment. */
 @RunWith(TestParameterInjector::class)
 class GlideImageSourceTest {
-  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val serverRule = MockWebServerRule()
   @get:Rule val testName = TestName()
@@ -90,10 +89,6 @@ class GlideImageSourceTest {
 
   @Before
   fun setup() {
-    rule.activityRule.scenario.onActivity {
-      it.prepareForScreenshotTest()
-    }
-
     serverRule.server.dispatcher = object : Dispatcher() {
       override fun dispatch(request: RecordedRequest) = when (request.path) {
         "/full_image.png" -> assetAsResponse("full_image.png", delay = 300.milliseconds)

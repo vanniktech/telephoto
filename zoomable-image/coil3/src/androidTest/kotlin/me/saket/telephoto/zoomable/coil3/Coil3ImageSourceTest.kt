@@ -9,7 +9,6 @@ import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -72,8 +71,8 @@ import kotlinx.coroutines.withContext
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.util.CiScreenshotValidator
+import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.compositionLocalProviderReturnable
-import me.saket.telephoto.util.prepareForScreenshotTest
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
@@ -109,7 +108,7 @@ import coil3.size.Size as CoilSize
 
 @RunWith(TestParameterInjector::class)
 class Coil3ImageSourceTest {
-  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val serverRule = MockWebServerRule()
   @get:Rule val testName = TestName()
@@ -126,10 +125,6 @@ class Coil3ImageSourceTest {
 
   @Before
   fun setUp() {
-    rule.activityRule.scenario.onActivity {
-      it.prepareForScreenshotTest()
-    }
-
     serverRule.server.dispatcher = object : Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse {
         return when (request.path) {

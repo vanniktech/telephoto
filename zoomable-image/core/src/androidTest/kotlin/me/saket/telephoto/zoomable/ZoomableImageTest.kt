@@ -2,12 +2,9 @@
 
 package me.saket.telephoto.zoomable
 
-import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.view.KeyEvent
 import android.view.ViewConfiguration
-import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -84,11 +81,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.test.runner.lifecycle.ActivityLifecycleCallback
 import androidx.test.espresso.device.DeviceInteraction.Companion.setScreenOrientation
 import androidx.test.espresso.device.EspressoDevice.Companion.onDevice
 import androidx.test.espresso.device.action.ScreenOrientation
@@ -114,14 +107,13 @@ import kotlinx.coroutines.test.runTest
 import leakcanary.LeakAssertions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.util.CiScreenshotValidator
-import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomableImageSource.ResolveResult
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
 import org.junit.After
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -135,7 +127,7 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalFoundationApi::class)
 @RunWith(TestParameterInjector::class)
 class ZoomableImageTest {
-  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val orientationRule = ScreenOrientationRule(ScreenOrientation.PORTRAIT)
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()
@@ -149,13 +141,6 @@ class ZoomableImageTest {
     filenameFunc = { it },
     resultValidator = screenshotValidator
   )
-
-  @Before
-  fun setup() {
-    rule.activityRule.scenario.onActivity {
-      it.prepareForScreenshotTest()
-    }
-  }
 
   @After
   fun tearDown() {

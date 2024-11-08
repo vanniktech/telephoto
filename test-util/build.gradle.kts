@@ -18,4 +18,6 @@ dependencies {
   implementation(libs.compose.ui.test.junit)
   implementation(libs.androidx.test.runner) // Needed for Screenshot.capture().
   implementation(libs.assertk)
+  api(libs.androidx.appcompat)
+  implementation(libs.androidx.activity)
 }

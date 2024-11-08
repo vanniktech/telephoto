@@ -5,7 +5,6 @@ package me.saket.telephoto.subsampling
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -38,7 +37,6 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -63,7 +61,7 @@ import me.saket.telephoto.subsamplingimage.internal.PooledImageRegionDecoder
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.subsamplingimage.test.R
 import me.saket.telephoto.util.CiScreenshotValidator
-import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.ScreenshotTestActivity
 import me.saket.telephoto.util.waitUntil
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.internal.RealZoomableContentTransformation
@@ -75,7 +73,6 @@ import okio.Path.Companion.toOkioPath
 import okio.source
 import org.junit.After
 import org.junit.AssumptionViolatedException
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -86,7 +83,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
 class SubSamplingImageTest {
-  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()
 
@@ -99,13 +96,6 @@ class SubSamplingImageTest {
     filenameFunc = { it },
     resultValidator = screenshotValidator,
   )
-
-  @Before
-  fun setup() {
-    rule.activityRule.scenario.onActivity {
-      it.prepareForScreenshotTest()
-    }
-  }
 
   @After
   fun tearDown() {

@@ -3,7 +3,6 @@
 package me.saket.telephoto.zoomable
 
 import android.view.ViewConfiguration
-import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -45,9 +44,8 @@ import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
 import leakcanary.LeakAssertions
-import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.ScreenshotTestActivity
 import org.junit.After
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,17 +53,10 @@ import org.junit.runner.RunWith
 // TODO: move these tests to :zoomable
 @RunWith(TestParameterInjector::class)
 class ZoomableTest {
-  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
   @get:Rule val dropshots = Dropshots(
     filenameFunc = { "zoomable_$it" },
   )
-
-  @Before
-  fun setup() {
-    rule.activityRule.scenario.onActivity {
-      it.prepareForScreenshotTest()
-    }
-  }
 
   @After
   fun tearDown() {

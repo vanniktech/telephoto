@@ -1,12 +1,9 @@
 package me.saket.telephoto.zoomable
 
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.MotionDurationScale
-import androidx.compose.ui.platform.ViewConfiguration
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -15,25 +12,22 @@ import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeWithVelocity
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.Condition
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.UiDevice
 import com.dropbox.dropshots.Dropshots
 import leakcanary.LeakAssertions
 import me.saket.telephoto.util.CiScreenshotValidator
-import me.saket.telephoto.util.prepareForScreenshotTest
+import me.saket.telephoto.util.ScreenshotTestActivity
 import org.junit.After
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class, ExperimentalComposeUiApi::class)
 class AnimatedZoomableImageTest {
-  @get:Rule val rule = createAndroidComposeRule<ComponentActivity>(
+  @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>(
     effectContext = object : MotionDurationScale {
       override val scaleFactor: Float get() = 1f
     }
@@ -47,13 +41,6 @@ class AnimatedZoomableImageTest {
       tolerancePercentOnCi = 0.01f,
     )
   )
-
-  @Before
-  fun setup() {
-    rule.activityRule.scenario.onActivity {
-      it.prepareForScreenshotTest()
-    }
-  }
 
   @After
   fun tearDown() {

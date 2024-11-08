@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.SnapSpec
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -88,6 +89,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.test.runner.lifecycle.ActivityLifecycleCallback
+import androidx.test.espresso.device.DeviceInteraction.Companion.setScreenOrientation
+import androidx.test.espresso.device.EspressoDevice.Companion.onDevice
+import androidx.test.espresso.device.action.ScreenOrientation
+import androidx.test.espresso.device.rules.ScreenOrientationRule
 import assertk.all
 import assertk.assertThat
 import assertk.assertions.isCloseTo
@@ -131,6 +136,7 @@ import kotlin.time.Duration.Companion.seconds
 @RunWith(TestParameterInjector::class)
 class ZoomableImageTest {
   @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val orientationRule = ScreenOrientationRule(ScreenOrientation.PORTRAIT)
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()
 
@@ -1499,15 +1505,17 @@ class ZoomableImageTest {
   @Test fun transformations_are_retained_after_orientation_change() {
     lateinit var imageState: ZoomableImageState
 
-    rule.setContent {
+    val recreationTester = ActivityRecreationTester(rule)
+    recreationTester.setContent {
       imageState = rememberZoomableImageState(
         rememberZoomableState(ZoomSpec(maxZoomFactor = 3f))
       )
       ZoomableImage(
         modifier = Modifier
           .fillMaxSize()
+          .border(1.dp, Color.Yellow)
           .testTag("image"),
-        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = false),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = true),
         state = imageState,
         contentDescription = null,
       )
@@ -1523,12 +1531,8 @@ class ZoomableImageTest {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_rotation]")
     }
 
-    rule.runOnUiThread {
-      assertThat(rule.activity.resources.configuration.orientation).isEqualTo(Configuration.ORIENTATION_PORTRAIT)
-      rule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-    }
-    rule.runOnIdle {
-      rule.activity.prepareForScreenshotTest()
+    recreationTester.recreateWith {
+      onDevice().setScreenOrientation(ScreenOrientation.LANDSCAPE)
     }
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }

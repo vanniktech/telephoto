@@ -9,6 +9,11 @@ apply plugin: 'app.cash.paparazzi'
 
 android {
   namespace "me.saket.telephoto.zoomable.image"
+  testOptions {
+    emulatorControl {
+      enable = true
+    }
+  }
 }
 
 dependencies {
@@ -22,4 +27,5 @@ dependencies {
 
   androidTestImplementation(projects.testUtil)
   androidTestImplementation(libs.androidx.test.uiautomator)
+  androidTestImplementation(libs.espresso.device)
 }

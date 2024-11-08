@@ -1522,6 +1522,7 @@ class ZoomableImageTest {
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
+      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
     }
   }

@@ -85,7 +85,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.device.DeviceInteraction.Companion.setScreenOrientation
 import androidx.test.espresso.device.EspressoDevice.Companion.onDevice
 import androidx.test.espresso.device.action.ScreenOrientation
-import androidx.test.espresso.device.rules.ScreenOrientationRule
 import assertk.all
 import assertk.assertThat
 import assertk.assertions.isCloseTo
@@ -128,7 +127,6 @@ import kotlin.time.Duration.Companion.seconds
 @RunWith(TestParameterInjector::class)
 class ZoomableImageTest {
   @get:Rule val rule = createAndroidComposeRule<ScreenshotTestActivity>()
-  @get:Rule val orientationRule = ScreenOrientationRule(ScreenOrientation.PORTRAIT)
   @get:Rule val timeout = Timeout.seconds(10)!!
   @get:Rule val testName = TestName()
 
@@ -145,6 +143,7 @@ class ZoomableImageTest {
   @After
   fun tearDown() {
     LeakAssertions.assertNoLeaks()
+    onDevice().setScreenOrientation(ScreenOrientation.PORTRAIT)
   }
 
   @Test fun canary() {

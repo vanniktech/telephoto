@@ -65,7 +65,6 @@ import kotlin.math.abs
 @Stable
 internal class RealZoomableState internal constructor(
   initialGestureState: GestureState? = null,
-  autoApplyTransformations: Boolean = true,
 ) : ZoomableState {
 
   override val contentTransformation: ZoomableContentTransformation by derivedStateOf {
@@ -125,7 +124,7 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  override var autoApplyTransformations: Boolean by mutableStateOf(autoApplyTransformations)
+  override var autoApplyTransformations: Boolean by mutableStateOf(true)
   override var contentScale: ContentScale by mutableStateOf(ContentScale.Fit)
   override var contentAlignment: Alignment by mutableStateOf(Alignment.Center)
   override var zoomSpec by mutableStateOf(ZoomSpec())
@@ -615,13 +614,14 @@ internal class RealZoomableState internal constructor(
   }
 
   companion object {
-    internal val Saver = Saver<RealZoomableState, ZoomableSavedState>(
+    internal val Saver = Saver(
       save = {
         ZoomableSavedState(
           gestureState = it.calculateGestureState(),
+          contentLayoutSize = it.contentLayoutSize,
         )
       },
-      restore = { RealZoomableState(initialGestureState = it.asGestureState()) }
+      restore = ::RealZoomableState,
     )
   }
 }

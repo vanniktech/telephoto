@@ -36,13 +36,12 @@ fun rememberZoomableState(
   hardwareShortcutsSpec: HardwareShortcutsSpec = HardwareShortcutsSpec(),
 ): ZoomableState {
   return rememberSaveable(saver = RealZoomableState.Saver) {
-    RealZoomableState(
-      autoApplyTransformations = autoApplyTransformations,
-    )
+    RealZoomableState()
   }.also {
     it.zoomSpec = zoomSpec
     it.hardwareShortcutsSpec = hardwareShortcutsSpec
     it.layoutDirection = LocalLayoutDirection.current
+    it.autoApplyTransformations = autoApplyTransformations
   }
 }
 

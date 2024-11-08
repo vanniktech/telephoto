@@ -1526,6 +1526,40 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun image_with_no_transformation_is_correctly_positioned_after_orientation_change() {
+    lateinit var imageState: ZoomableImageState
+
+    val recreationTester = ActivityRecreationTester(rule)
+    recreationTester.setContent {
+      imageState = rememberZoomableImageState(
+        rememberZoomableState(ZoomSpec(maxZoomFactor = 3f))
+      )
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .border(1.dp, Color.Yellow)
+          .testTag("image"),
+        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = true),
+        state = imageState,
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_rotation]")
+    }
+
+    recreationTester.recreateWith {
+      onDevice().setScreenOrientation(ScreenOrientation.LANDSCAPE)
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
+    }
+  }
+
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false

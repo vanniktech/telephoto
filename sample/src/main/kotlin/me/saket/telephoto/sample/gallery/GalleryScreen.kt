@@ -3,7 +3,6 @@ package me.saket.telephoto.sample.gallery
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.compose.animation.Animatable
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -38,8 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.palette.graphics.Palette
 import androidx.palette.graphics.Target
 import androidx.palette.graphics.get
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.asDrawable
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.request.crossfade
 import com.slack.circuit.runtime.Navigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -91,10 +91,10 @@ private fun AlbumGrid(
           .clickable { navigator.goTo(MediaViewerScreenKey(album, initialIndex = index)) },
         contentAlignment = Alignment.BottomStart
       ) {
-
         val scope = rememberCoroutineScope()
         val colorScheme = MaterialTheme.colorScheme
         val captionBackground = remember { Animatable(colorScheme.surface) }
+        val context = LocalContext.current
 
         AsyncImage(
           modifier = Modifier.fillMaxSize(),
@@ -105,7 +105,7 @@ private fun AlbumGrid(
             .allowHardware(false)
             .listener(onSuccess = { _, result ->
               scope.launch {
-                val accent = result.drawable.extractColor()
+                val accent = result.image.asDrawable(context.resources).extractColor()
                 if (accent != null) {
                   captionBackground.animateTo(accent)
                 }

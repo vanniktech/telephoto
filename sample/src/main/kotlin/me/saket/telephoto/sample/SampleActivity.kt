@@ -17,9 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import coil.Coil
-import coil.ImageLoader
-import coil.decode.ImageDecoderDecoder
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import me.saket.telephoto.sample.gallery.MediaAlbum
 import me.saket.telephoto.sample.gallery.MediaItem
@@ -32,12 +29,6 @@ class SampleActivity : AppCompatActivity() {
     enableEdgeToEdge()
     setupImmersiveMode()
     super.onCreate(savedInstanceState)
-
-    Coil.setImageLoader(
-      ImageLoader.Builder(this)
-        .components { add(ImageDecoderDecoder.Factory()) }
-        .build()
-    )
 
     val album = MediaAlbum(
       items = listOf(

@@ -16,7 +16,7 @@ import me.saket.telephoto.zoomable.ZoomableState
  * Used when [ZoomableState]'s saved gesture state cannot be restored due to viewport size changes.
  * Adjusts zoom and pan values to maintain the content's centroid position in the new viewport.
  */
-internal class GestureStateRestorer(
+internal class GestureStateAdjuster(
   private val oldFinalZoom: ScaleFactor,
   private val oldContentOffsetAtViewportCenter: Offset, // Present in the content's coordinate space.
 ) {

@@ -13,13 +13,13 @@ import me.saket.telephoto.zoomable.ContentZoomFactor
 import me.saket.telephoto.zoomable.GestureStateInputs
 import kotlin.test.Test
 
-class GestureStateRestorerTest {
+class GestureStateAdjusterTest {
   @Test fun `retain zoom level for a proportionate base zoom`() {
     // Proportional base zoom will be created for
     // content scales such as ContentScale.Fit.
     val savedFinalZoom = ScaleFactor(5.5f, 5.5f)
 
-    val restorer = GestureStateRestorer(
+    val adjuster = GestureStateAdjuster(
       oldFinalZoom = savedFinalZoom,
       oldContentOffsetAtViewportCenter = Offset(800f, 800f),
     )
@@ -30,7 +30,7 @@ class GestureStateRestorerTest {
       contentAlignment = Alignment.Center,
       layoutDirection = LayoutDirection.Ltr,
     )
-    val restoredGestureState = restorer.calculateForNewViewportSize(
+    val restoredGestureState = adjuster.calculateForNewViewportSize(
       inputs = gestureStateInputs,
       coerceWithinBounds = { offset, _ -> offset },
     )
@@ -47,7 +47,7 @@ class GestureStateRestorerTest {
     // content scales such as ContentScale.FillBounds.
     val savedFinalZoom = ScaleFactor(3.3f, 5.5f)
 
-    val restorer = GestureStateRestorer(
+    val adjuster = GestureStateAdjuster(
       oldFinalZoom = savedFinalZoom,
       oldContentOffsetAtViewportCenter = Offset(800f, 800f),
     )
@@ -58,7 +58,7 @@ class GestureStateRestorerTest {
       contentAlignment = Alignment.Center,
       layoutDirection = LayoutDirection.Ltr,
     )
-    val restoredGestureState = restorer.calculateForNewViewportSize(
+    val restoredGestureState = adjuster.calculateForNewViewportSize(
       inputs = newGestureStateInputs,
       coerceWithinBounds = { offset, _ -> offset },
     )

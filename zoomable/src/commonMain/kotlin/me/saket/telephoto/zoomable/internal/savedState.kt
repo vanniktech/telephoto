@@ -43,7 +43,7 @@ internal data class ZoomableSavedState private constructor(
         ?.let { viewportSize ->
           StateRestorerInfo(
             viewportSize = viewportSize.packToLong(),
-            contentOffsetAtViewportCenter = GestureStateRestorer.calculateContentOffsetAtViewportCenter(
+            contentOffsetAtViewportCenter = GestureStateAdjuster.calculateContentOffsetAtViewportCenter(
               gestureStateInputs = gestureStateInputs,
               savedGestureState = gestureState,
               viewportSize = viewportSize,
@@ -77,11 +77,11 @@ internal data class ZoomableSavedState private constructor(
     // window resize), the content's _visual_ anchor needs to be restored to its original position.
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
     // to maintain the anchor's position in the new viewport.
-    val stateRestorer = GestureStateRestorer(
+    val stateAdjuster = GestureStateAdjuster(
       oldFinalZoom = stateRestorerInfo.finalZoomFactor.unpackAsScaleFactor(),
       oldContentOffsetAtViewportCenter = stateRestorerInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
     )
-    return stateRestorer.calculateForNewViewportSize(inputs, coerceWithinBounds)
+    return stateAdjuster.calculateForNewViewportSize(inputs, coerceWithinBounds)
   }
 }
 

@@ -42,13 +42,6 @@ internal fun ScaleFactor.isPositiveAndFinite(): Boolean {
   return scaleX.isPositiveAndFinite() && scaleY.isPositiveAndFinite()
 }
 
-internal operator fun ScaleFactor.div(operand: ScaleFactor): ScaleFactor {
-  return ScaleFactor(
-    scaleX = this.scaleX / operand.scaleX,
-    scaleY = this.scaleY / operand.scaleY,
-  )
-}
-
 internal fun Offset.isSpecifiedAndFinite(): Boolean {
   return isSpecified && isFinite
 }

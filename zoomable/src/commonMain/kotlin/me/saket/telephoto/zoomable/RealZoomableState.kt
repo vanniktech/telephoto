@@ -728,7 +728,7 @@ internal data class ContentZoomFactor(
     fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: ScaleFactor): ContentZoomFactor {
       return ContentZoomFactor(
         baseZoom = baseZoom,
-        userZoom = UserZoomFactor((finalZoom / baseZoom.value).maxScale),
+        userZoom = UserZoomFactor(finalZoom.maxScale / baseZoom.value.maxScale),
       )
     }
   }

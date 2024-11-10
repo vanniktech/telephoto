@@ -61,9 +61,13 @@ internal data class ZoomableSavedState private constructor(
     inputs: GestureStateInputs,
     coerceWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
   ): GestureState {
-    if (stateRestorerInfo == null || stateRestorerInfo.viewportSize.unpackAsSize() == inputs.contentLayoutSize) {
+    val restoredUserOffset = userOffset.unpackAsOffset()
+    if (
+      (restoredUserOffset == Offset.Zero && userZoom == 1f)
+      || (stateRestorerInfo == null || stateRestorerInfo.viewportSize.unpackAsSize() == inputs.contentLayoutSize)
+    ) {
       return GestureState(
-        userOffset = UserOffset(userOffset.unpackAsOffset()),
+        userOffset = UserOffset(restoredUserOffset),
         userZoom = UserZoomFactor(userZoom),
         lastCentroid = centroid.unpackAsOffset(),
       )

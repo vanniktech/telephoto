@@ -113,6 +113,7 @@ import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -140,8 +141,13 @@ class ZoomableImageTest {
     resultValidator = screenshotValidator
   )
 
-  @After
-  fun tearDown() {
+  @Before fun setup() {
+    // tearDown() should take care of resetting the orientation,
+    // but there is a small chance that the previous test timed out.
+    onDevice().setScreenOrientation(ScreenOrientation.PORTRAIT)
+  }
+
+  @After fun tearDown() {
     LeakAssertions.assertNoLeaks()
     onDevice().setScreenOrientation(ScreenOrientation.PORTRAIT)
   }
@@ -1486,7 +1492,8 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun transformations_are_retained_after_orientation_change() {
+  // todo: should probably move these tests to ZoomableTest.
+  @Test fun non_empty_transformations_are_retained_across_orientation_change() {
     lateinit var imageState: ZoomableImageState
 
     val recreationTester = ActivityRecreationTester(rule)
@@ -1499,7 +1506,7 @@ class ZoomableImageTest {
           .fillMaxSize()
           .border(1.dp, Color.Yellow)
           .testTag("image"),
-        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = true),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = true),
         state = imageState,
         contentDescription = null,
       )
@@ -1507,8 +1514,7 @@ class ZoomableImageTest {
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     (rule.onNodeWithTag("image")).run {
-      performTouchInput { doubleClick(center) }
-      performTouchInput { swipe(RightToLeft) }
+      performTouchInput { doubleClick(center - Offset(0f, 360f)) }
     }
     rule.runOnIdle {
       assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
@@ -1524,9 +1530,19 @@ class ZoomableImageTest {
       assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
     }
+
+    recreationTester.recreateWith {
+      onDevice().setScreenOrientation(ScreenOrientation.PORTRAIT)
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_another_rotation]")
+    }
   }
 
-  @Test fun image_with_no_transformation_is_correctly_positioned_after_orientation_change() {
+  @Test fun empty_transformations_are_retained_across_orientation_change() {
     lateinit var imageState: ZoomableImageState
 
     val recreationTester = ActivityRecreationTester(rule)
@@ -1539,7 +1555,7 @@ class ZoomableImageTest {
           .fillMaxSize()
           .border(1.dp, Color.Yellow)
           .testTag("image"),
-        image = ZoomableImageSource.asset("fox_1500.jpg", subSample = true),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = true),
         state = imageState,
         contentDescription = null,
       )

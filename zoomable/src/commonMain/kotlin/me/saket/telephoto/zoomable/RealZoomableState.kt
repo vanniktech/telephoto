@@ -64,32 +64,15 @@ import kotlin.math.abs
 
 @Stable
 internal class RealZoomableState internal constructor(
-  restoredState: ZoomableSavedState? = null,
+  savedState: ZoomableSavedState? = null,
 ) : ZoomableState {
 
   override val contentTransformation: ZoomableContentTransformation by derivedStateOf {
     val gestureStateInputs = calculateGestureStateInputs()
     if (gestureStateInputs != null) {
-      val gestureState = gestureState.calculate(gestureStateInputs)
-      val contentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, gestureState.userZoom)
-      val contentOffset = ContentOffset(
-        baseOffsetForAlignment = gestureStateInputs.calculateOffsetForAlignment(),
-        userOffset = gestureState.userOffset,
-      )
-      val contentSize = gestureStateInputs.unscaledContentBounds.size
-      RealZoomableContentTransformation(
-        isSpecified = true,
-        contentSize = contentSize,
-        scale = contentZoom.finalZoom(),
-        scaleMetadata = RealZoomableContentTransformation.ScaleMetadata(
-          initialScale = gestureStateInputs.baseZoom.value,
-          userZoom = gestureState.userZoom.value,
-        ),
-        offset = (-contentOffset.finalOffset() * contentZoom.finalZoom()).let {
-          // Make it easier for consumers to perform `if (offset == zero)` checks.
-          if (it == -Offset.Zero) Offset.Zero else it
-        },
-        centroid = gestureState.lastCentroid,
+      RealZoomableContentTransformation.calculateFrom(
+        gestureStateInputs = gestureStateInputs,
+        gestureState = gestureState.calculate(gestureStateInputs),
       )
     } else {
       RealZoomableContentTransformation(
@@ -145,11 +128,16 @@ internal class RealZoomableState internal constructor(
 
   private var gestureState: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
-      restoredState?.asGestureState(expectedContentLayoutSize = inputs.contentLayoutSize)
+      savedState?.asGestureState(
+        inputs = inputs,
+        coerceWithinBounds = { contentOffset, contentZoom ->
+          contentOffset.coerceWithinContentBounds(contentZoom, inputs)
+        }
+      )
         ?: GestureState(
           userZoom = UserZoomFactor(1f),
-          lastCentroid = inputs.contentLayoutSize.center,
           userOffset = UserOffset(Offset.Zero),
+          lastCentroid = inputs.contentLayoutSize.center,
         )
     }
   )
@@ -616,11 +604,13 @@ internal class RealZoomableState internal constructor(
 
   companion object {
     internal val Saver = Saver(
-      save = {
-        ZoomableSavedState(
-          gestureState = it.calculateGestureState(),
-          contentLayoutSize = it.contentLayoutSize,
-        )
+      save = { state ->
+        state.calculateGestureStateInputs()?.let { inputs ->
+          ZoomableSavedState.from(
+            gestureState = state.gestureState.calculate(inputs),
+            gestureStateInputs = inputs,
+          )
+        }
       },
       restore = ::RealZoomableState,
     )
@@ -633,10 +623,11 @@ internal data class GestureState(
   // Note to self: Having ContentZoomFactor here would be convenient, but it complicates
   // state restoration. This class should not capture any layout-related values.
   val userZoom: UserZoomFactor,
+  // Centroid in the viewport (and not the unscaled content bounds).
   val lastCentroid: Offset,
 )
 
-private data class GestureStateInputs(
+internal data class GestureStateInputs(
   val contentLayoutSize: Size,
   val baseZoom: BaseZoomFactor,
   val unscaledContentBounds: Rect,
@@ -730,9 +721,13 @@ internal data class ContentZoomFactor(
     }
 
     fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: Float): ContentZoomFactor {
+      return forFinalZoom(baseZoom, ScaleFactor(finalZoom, finalZoom))
+    }
+
+    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: ScaleFactor): ContentZoomFactor {
       return ContentZoomFactor(
         baseZoom = baseZoom,
-        userZoom = UserZoomFactor(finalZoom / baseZoom.maxScale),
+        userZoom = UserZoomFactor((finalZoom / baseZoom.value).maxScale),
       )
     }
   }
@@ -763,6 +758,15 @@ internal data class ContentOffset(
     return this.copy(
       userOffset = UserOffset(transformed - this.baseOffsetForAlignment)
     )
+  }
+
+  companion object {
+    fun forFinalOffset(baseOffset: Offset, finalOffset: Offset): ContentOffset {
+      return ContentOffset(
+        baseOffsetForAlignment = baseOffset,
+        userOffset = UserOffset(finalOffset - baseOffset),
+      )
+    }
   }
 }
 

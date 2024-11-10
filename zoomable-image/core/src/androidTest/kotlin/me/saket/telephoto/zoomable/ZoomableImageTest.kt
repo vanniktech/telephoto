@@ -82,8 +82,6 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toOffset
 import androidx.lifecycle.Lifecycle
-import androidx.test.espresso.device.DeviceInteraction.Companion.setScreenOrientation
-import androidx.test.espresso.device.EspressoDevice.Companion.onDevice
 import androidx.test.espresso.device.action.ScreenOrientation
 import assertk.all
 import assertk.assertThat
@@ -144,12 +142,12 @@ class ZoomableImageTest {
   @Before fun setup() {
     // tearDown() should take care of resetting the orientation,
     // but there is a small chance that the previous test timed out.
-    onDevice().setScreenOrientation(ScreenOrientation.PORTRAIT)
+    rule.setScreenOrientation(ScreenOrientation.PORTRAIT)
   }
 
   @After fun tearDown() {
     LeakAssertions.assertNoLeaks()
-    onDevice().setScreenOrientation(ScreenOrientation.PORTRAIT)
+    rule.setScreenOrientation(ScreenOrientation.PORTRAIT)
   }
 
   @Test fun canary() {
@@ -1522,7 +1520,7 @@ class ZoomableImageTest {
     }
 
     recreationTester.recreateWith {
-      onDevice().setScreenOrientation(ScreenOrientation.LANDSCAPE)
+      rule.setScreenOrientation(ScreenOrientation.LANDSCAPE)
     }
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
@@ -1532,7 +1530,7 @@ class ZoomableImageTest {
     }
 
     recreationTester.recreateWith {
-      onDevice().setScreenOrientation(ScreenOrientation.PORTRAIT)
+      rule.setScreenOrientation(ScreenOrientation.PORTRAIT)
     }
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
@@ -1567,7 +1565,7 @@ class ZoomableImageTest {
     }
 
     recreationTester.recreateWith {
-      onDevice().setScreenOrientation(ScreenOrientation.LANDSCAPE)
+      rule.setScreenOrientation(ScreenOrientation.LANDSCAPE)
     }
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }

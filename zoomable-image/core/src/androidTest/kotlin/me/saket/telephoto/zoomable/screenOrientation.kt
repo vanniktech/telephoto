@@ -7,7 +7,12 @@ import androidx.test.espresso.device.action.ScreenOrientation
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 
 // TODO: replace with Espresso Device API once emulator.wtf adds support for it.
-internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.setScreenOrientation(orientation: ScreenOrientation) {
+internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.setScreenOrientation(
+  orientation: ScreenOrientation
+) {
+  if (activity.isDestroyed) {
+    return
+  }
   runOnUiThread {
     val currentOrientation = activity.resources.configuration.orientation
     val targetOrientation = when (orientation) {

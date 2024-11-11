@@ -31,9 +31,12 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.flow.filter
 import me.saket.telephoto.subsamplingimage.SubSamplingImage
+import me.saket.telephoto.subsamplingimage.contentDescription
 import me.saket.telephoto.subsamplingimage.rememberSubSamplingImageState
 import me.saket.telephoto.zoomable.internal.FocusForwarder
 import me.saket.telephoto.zoomable.internal.PlaceholderBoundsProvider
@@ -93,7 +96,9 @@ fun ZoomableImage(
   Box(
     modifier = modifier
       .onSizeChanged { canvasSize = it.toSize() }
-      .focusForwarder(focusForwarder, enabled = state.hardwareShortcutsEnabled()),
+      .focusForwarder(focusForwarder, enabled = state.hardwareShortcutsEnabled())
+      .semantics(mergeDescendants = true) { this.isTraversalGroup = true }
+      .contentDescriptionIfImageIsEmpty(state, contentDescription),
     propagateMinConstraints = true,
   ) {
     state.isImageDisplayed = when (resolved.delegate) {
@@ -158,7 +163,7 @@ fun ZoomableImage(
             clipToBounds = clipToBounds,
           ),
         painter = painter,
-        contentDescription = contentDescription,
+        contentDescription = null,
         alignment = alignment,
         contentScale = contentScale,
         alpha = alpha,
@@ -219,6 +224,19 @@ fun ZoomableImage(
         )
       }
     }
+  }
+}
+
+private fun Modifier.contentDescriptionIfImageIsEmpty(
+  imageState: ZoomableImageState,
+  contentDescription: String?
+): Modifier {
+  return if (imageState.isImageDisplayed) {
+    // The full image composables -- Image() or SubSamplingImage(),
+    // have their own content descriptions.
+    this
+  } else {
+    this.contentDescription(contentDescription)
   }
 }
 

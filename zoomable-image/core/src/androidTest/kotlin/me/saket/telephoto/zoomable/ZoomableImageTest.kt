@@ -56,12 +56,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.isNotFocusable
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -1611,6 +1614,68 @@ class ZoomableImageTest {
     assertThat(imageState.zoomableState.transformedContentBounds.top).isEqualTo(193f)
     assertThat(numOfRecompositions).isEqualTo(numOfRecompositionsBeforeUpdate + 1)
   }
+
+  @Test fun content_description_is_correctly_set() {
+    val imageSource = object : ZoomableImageSource {
+      var resolveResult: ResolveResult by mutableStateOf(
+        ResolveResult(
+          delegate = null,
+          placeholder = null,
+        )
+      )
+
+      @Composable
+      override fun resolve(canvasSize: Flow<Size>): ResolveResult {
+        return resolveResult
+      }
+    }
+
+    lateinit var imageState: ZoomableImageState
+    rule.setContent {
+      imageState = rememberZoomableImageState()
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .testTag("image"),
+        image = imageSource,
+        state = imageState,
+        contentDescription = "nicolas cage",
+      )
+    }
+
+    // Test case: neither the placeholder nor the full image have been loaded yet.
+    assertThat(imageState.isImageDisplayed).isFalse()
+    rule.onNodeWithTag("image").assertContentDescriptionEquals("nicolas cage")
+
+    // Test case: placeholder only.
+    val placeholderPainter = rule.activity.assets.open("cat_1920.jpg").use { stream ->
+      BitmapPainter(BitmapFactory.decodeStream(stream).asImageBitmap())
+    }
+    imageSource.resolveResult = imageSource.resolveResult.copy(
+      placeholder = placeholderPainter,
+    )
+    rule.waitUntil { imageState.isPlaceholderDisplayed }
+    rule.onNodeWithTag("image").assertContentDescriptionEquals("nicolas cage")
+
+    // Test case: a non-sub-sampled image is present.
+    imageSource.resolveResult = imageSource.resolveResult.copy(
+      delegate = ZoomableImageSource.PainterDelegate(placeholderPainter),
+    )
+    rule.waitUntil { imageState.isImageDisplayed }
+    rule.onNodeWithTag("image").assertContentDescriptionEquals("nicolas cage")
+
+    // Test case: sub-sampled image is present.
+    imageSource.resolveResult = imageSource.resolveResult.copy(
+      delegate = ZoomableImageSource.SubSamplingDelegate(SubSamplingImageSource.asset("cat_1920.jpg")),
+    )
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.onNodeWithTag("image").assertContentDescriptionEquals("nicolas cage")
+
+    // Verify that ZoomableImage() clears its content description after
+    // loading the full image, rather than retaining its initial description.
+    rule.onAllNodesWithContentDescription("nicolas cage").assertCountEquals(1)
+  }
+
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false

@@ -113,7 +113,7 @@ private fun DrawScope.drawImageTile(
 }
 
 @Stable
-private fun Modifier.contentDescription(contentDescription: String?): Modifier {
+internal fun Modifier.contentDescription(contentDescription: String?): Modifier {
   return if (contentDescription != null) {
     semantics {
       this.contentDescription = contentDescription

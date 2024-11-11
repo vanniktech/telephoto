@@ -1577,6 +1577,40 @@ class ZoomableImageTest {
     }
   }
 
+  @Test fun layout_changes_are_rendered_immediately_on_the_next_frame() {
+    var topPadding by mutableStateOf(0.dp)
+    var numOfRecompositions = 0
+
+    lateinit var imageState: ZoomableImageState
+    rule.setContent {
+      imageState = rememberZoomableImageState()
+      ZoomableImage(
+        modifier = Modifier
+          .fillMaxSize()
+          .padding(top = topPadding)
+          .testTag("image"),
+        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = true),
+        state = imageState,
+        contentDescription = null,
+      )
+
+      SideEffect { numOfRecompositions++ }
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      assertThat(imageState.zoomableState.transformedContentBounds.top).isEqualTo(390f)
+    }
+
+    val numOfRecompositionsBeforeUpdate = numOfRecompositions
+    topPadding = 150.dp
+
+    // waitUntil or runOnIdle aren't used here because they can advance the time by multiple frames.
+    rule.mainClock.advanceTimeByFrame()
+
+    assertThat(imageState.zoomableState.transformedContentBounds.top).isEqualTo(193f)
+    assertThat(numOfRecompositions).isEqualTo(numOfRecompositionsBeforeUpdate + 1)
+  }
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false

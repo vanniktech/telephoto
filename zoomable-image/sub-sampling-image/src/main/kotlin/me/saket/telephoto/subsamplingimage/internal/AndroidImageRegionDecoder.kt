@@ -4,15 +4,14 @@ import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import android.os.Build
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.toAndroidColorSpace
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.tracing.trace
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -25,7 +24,7 @@ internal class AndroidImageRegionDecoder private constructor(
   private val imageOptions: ImageBitmapOptions,
   private val decoder: BitmapRegionDecoder,
   private val exif: ExifMetadata,
-  private val dispatcher: ExecutorCoroutineDispatcher,
+  private val dispatcher: CoroutineDispatcher,
 ) : ImageRegionDecoder {
 
   override val imageSize: IntSize get() = decoder.size()
@@ -70,7 +69,6 @@ internal class AndroidImageRegionDecoder private constructor(
     // decoding regions, the underlying decoder will remain in memory for a bit longer until GC
     // kicks in. I think that is okay as its memory usage would be similar to displaying multiple
     // _active_ images in a pager, each allocating a decoder.
-    dispatcher.close()
   }
 
   private fun BitmapRegionDecoder.size(): IntSize {
@@ -87,9 +85,9 @@ internal class AndroidImageRegionDecoder private constructor(
   }
 
   companion object {
-    @OptIn(DelicateCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     val Factory = ImageRegionDecoder.Factory { params ->
-      val dispatcher = newSingleThreadContext("AndroidImageRegionDecoder")
+      val dispatcher = Dispatchers.IO.limitedParallelism(1)
 
       AndroidImageRegionDecoder(
         imageSource = params.imageSource,

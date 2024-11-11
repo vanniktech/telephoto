@@ -10,19 +10,22 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule<A>, A>.setScreenOrientation(
   orientation: ScreenOrientation
 ) {
-  if (activity.isDestroyed) {
-    return
-  }
-  runOnUiThread {
-    val currentOrientation = activity.resources.configuration.orientation
-    val targetOrientation = when (orientation) {
-      ScreenOrientation.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-      ScreenOrientation.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-    }
+  try {
+    runOnUiThread {
+      val currentOrientation = activity.resources.configuration.orientation
+      val targetOrientation = when (orientation) {
+        ScreenOrientation.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        ScreenOrientation.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+      }
 
-    if (currentOrientation != targetOrientation) {
-      activity.requestedOrientation = targetOrientation
+      if (currentOrientation != targetOrientation) {
+        activity.requestedOrientation = targetOrientation
+        this.waitForIdle()
+      }
+    }
+  } catch (e: NullPointerException) {
+    if (e.message?.contains("Activity has been destroyed already") == false) {
+      throw e
     }
   }
-  this.waitForIdle()
 }

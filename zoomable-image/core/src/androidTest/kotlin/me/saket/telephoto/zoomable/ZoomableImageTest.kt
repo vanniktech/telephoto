@@ -1518,7 +1518,6 @@ class ZoomableImageTest {
       performTouchInput { doubleClick(center - Offset(0f, 360f)) }
     }
     rule.runOnIdle {
-      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_rotation]")
     }
 
@@ -1528,7 +1527,6 @@ class ZoomableImageTest {
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
-      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
     }
 
@@ -1538,7 +1536,6 @@ class ZoomableImageTest {
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
-      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(1f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_another_rotation]")
     }
   }

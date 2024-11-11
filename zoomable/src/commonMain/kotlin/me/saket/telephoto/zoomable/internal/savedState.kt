@@ -62,8 +62,9 @@ internal data class ZoomableSavedState private constructor(
     coerceWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
   ): GestureState {
     val restoredUserOffset = userOffset.unpackAsOffset()
+    val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && userZoom == 1f
     if (
-      (restoredUserOffset == Offset.Zero && userZoom == 1f)
+      wasGestureStateEmpty
       || (stateRestorerInfo == null || stateRestorerInfo.viewportSize.unpackAsSize() == inputs.contentLayoutSize)
     ) {
       return GestureState(
@@ -78,10 +79,13 @@ internal data class ZoomableSavedState private constructor(
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
     // to maintain the anchor's position in the new viewport.
     val stateAdjuster = GestureStateAdjuster(
-      oldFinalZoom = stateRestorerInfo.finalZoomFactor.unpackAsScaleFactor(),
+      oldUserZoom = UserZoomFactor(userZoom),
       oldContentOffsetAtViewportCenter = stateRestorerInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
     )
-    return stateAdjuster.calculateForNewViewportSize(inputs, coerceWithinBounds)
+    return stateAdjuster.adjustForNewViewportSize(
+      inputs = inputs,
+      coerceWithinBounds = coerceWithinBounds,
+    )
   }
 }
 

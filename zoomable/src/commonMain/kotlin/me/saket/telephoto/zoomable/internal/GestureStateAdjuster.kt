@@ -4,11 +4,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
-import androidx.compose.ui.layout.ScaleFactor
 import me.saket.telephoto.zoomable.ContentOffset
 import me.saket.telephoto.zoomable.ContentZoomFactor
 import me.saket.telephoto.zoomable.GestureState
 import me.saket.telephoto.zoomable.GestureStateInputs
+import me.saket.telephoto.zoomable.UserZoomFactor
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
 import me.saket.telephoto.zoomable.ZoomableState
 
@@ -17,19 +17,21 @@ import me.saket.telephoto.zoomable.ZoomableState
  * Adjusts zoom and pan values to maintain the content's centroid position in the new viewport.
  */
 internal class GestureStateAdjuster(
-  private val oldFinalZoom: ScaleFactor,
+  private val oldUserZoom: UserZoomFactor,
   private val oldContentOffsetAtViewportCenter: Offset, // Present in the content's coordinate space.
 ) {
 
-  fun calculateForNewViewportSize(
+  fun adjustForNewViewportSize(
     inputs: GestureStateInputs,
     coerceWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
   ): GestureState {
-    // A new base zoom was generated with respect to the new viewport size.
-    // Retain the old zoom level even with this new base zoom.
-    val newZoom = ContentZoomFactor.forFinalZoom(
+    // A new base zoom is generated based on the viewport size. Only the user's zoom
+    // value should be retained, not the final zoom. This prevents content from appearing
+    // visually different across screen sizes - for example, a final zoom of 2f would
+    // look smaller on a 2400p screen compared to a 1080p screen if the final zoom were kept.
+    val newZoom = ContentZoomFactor(
       baseZoom = inputs.baseZoom,
-      finalZoom = oldFinalZoom,
+      userZoom = oldUserZoom,
     )
 
     // Find the offset needed to move the old anchor (i.e., the content offset at the viewport

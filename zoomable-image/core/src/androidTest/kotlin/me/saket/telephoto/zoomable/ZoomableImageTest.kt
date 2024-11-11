@@ -1491,7 +1491,9 @@ class ZoomableImageTest {
   }
 
   // todo: should probably move these tests to ZoomableTest.
-  @Test fun non_empty_transformations_are_retained_across_orientation_change() {
+  @Test fun non_empty_transformations_are_retained_across_orientation_change(
+    @TestParameter contentScaleParam: ContentScaleParamWithDifferentProportions,
+  ) {
     lateinit var imageState: ZoomableImageState
 
     val recreationTester = ActivityRecreationTester(rule)
@@ -1507,6 +1509,7 @@ class ZoomableImageTest {
         image = ZoomableImageSource.asset("cat_1920.jpg", subSample = true),
         state = imageState,
         contentDescription = null,
+        contentScale = contentScaleParam.value,
       )
     }
 
@@ -1540,7 +1543,9 @@ class ZoomableImageTest {
     }
   }
 
-  @Test fun empty_transformations_are_retained_across_orientation_change() {
+  @Test fun empty_transformations_are_retained_across_orientation_change(
+    @TestParameter contentScaleParam: ContentScaleParamWithDifferentProportions,
+  ) {
     lateinit var imageState: ZoomableImageState
 
     val recreationTester = ActivityRecreationTester(rule)
@@ -1556,6 +1561,7 @@ class ZoomableImageTest {
         image = ZoomableImageSource.asset("cat_1920.jpg", subSample = true),
         state = imageState,
         contentDescription = null,
+        contentScale = contentScaleParam.value,
       )
     }
 
@@ -1614,6 +1620,12 @@ class ZoomableImageTest {
     Fit(ContentScale.Fit),
     Inside(ContentScale.Inside),
     Fill(ContentScale.FillBounds),
+  }
+
+  @Suppress("unused")
+  enum class ContentScaleParamWithDifferentProportions(val value: ContentScale) {
+    Fit(ContentScale.Fit),          // Scaling is proportionate.
+    Fill(ContentScale.FillBounds),  // Scaling is disproportionate
   }
 
   @Suppress("unused")

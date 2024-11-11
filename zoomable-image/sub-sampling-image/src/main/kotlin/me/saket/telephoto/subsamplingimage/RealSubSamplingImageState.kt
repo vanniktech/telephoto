@@ -123,6 +123,10 @@ internal class RealSubSamplingImageState(
   internal val viewportImageTiles: ImmutableList<ViewportImageTile> by derivedStateOf {
     // Fill any missing gaps in tiles by drawing the low-res base tile underneath as
     // a fallback. The base tile will hide again when all bitmaps have been loaded.
+    //
+    // A drawback of doing this is that the base tile may get optimized out before the
+    // foreground tiles complete their fade-in animation (run by ZoomableImage()).
+    // This can only be solved by encoding their animation info in the tiles.
     val hasNoForeground = viewportTiles.fastAll { it.isBase }
     val hasGapsInForeground = { viewportTiles.fastAny { !it.isBase && it.isVisible && it.region !in loadedImages } }
     val canDrawBaseTile = hasNoForeground || hasGapsInForeground()

@@ -4,6 +4,7 @@ package me.saket.telephoto.zoomable.coil3
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +48,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import coil3.size.Size as CoilSize
 
-internal class Coil3ImageSource(
+@Immutable
+internal data class Coil3ImageSource(
   private val model: Any?,
   private val imageLoader: ImageLoader,
 ) : ZoomableImageSource {

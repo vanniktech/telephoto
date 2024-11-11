@@ -6,6 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +48,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import coil.size.Size as CoilSize
 
-internal class CoilImageSource(
+@Immutable
+internal data class CoilImageSource(
   private val model: Any?,
   private val imageLoader: ImageLoader,
 ) : ZoomableImageSource {

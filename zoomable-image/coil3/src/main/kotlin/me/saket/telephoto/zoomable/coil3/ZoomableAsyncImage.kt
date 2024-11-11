@@ -18,7 +18,6 @@ import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImageModelEqualityDelegate
 import coil3.compose.LocalAsyncImageModelEqualityDelegate
 import coil3.imageLoader
-import coil3.request.ImageRequest
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
@@ -127,18 +126,8 @@ private class StableModel(
   private val equalityDelegate: AsyncImageModelEqualityDelegate,
 ) {
   override fun equals(other: Any?): Boolean =
-    equalityDelegate.equalsCompat(model, (other as? StableModel)?.model)
+    equalityDelegate.equals(model, (other as? StableModel)?.model)
 
   override fun hashCode(): Int =
     equalityDelegate.hashCode(model)
-}
-
-// TODO: https://github.com/coil-kt/coil/issues/2640
-@ExperimentalCoilApi
-private fun AsyncImageModelEqualityDelegate.equalsCompat(self: Any?, other: Any?): Boolean {
-  return if (self !is ImageRequest || other !is ImageRequest) {
-    self == other
-  } else {
-    this.equals(self, other)
-  }
 }

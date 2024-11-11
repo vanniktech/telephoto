@@ -219,9 +219,7 @@ class Coil3ImageSourceTest {
         assertThat(delegate.source.preview).isNotNull()
         assertThat(delegate.imageOptions).isEqualTo(
           ImageBitmapOptions(
-            // TODO: https://github.com/coil-kt/coil/discussions/2641
-            //config = ImageBitmapConfig.Rgb565,
-            config = ImageBitmapConfig.Argb8888,
+            config = ImageBitmapConfig.Rgb565,
             colorSpace = ColorSpaces.Srgb,
           )
         )

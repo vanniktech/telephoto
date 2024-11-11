@@ -19,4 +19,5 @@ internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule
       activity.requestedOrientation = targetOrientation
     }
   }
+  this.waitForIdle()
 }

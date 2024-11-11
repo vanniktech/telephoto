@@ -11,18 +11,19 @@ internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule
   orientation: ScreenOrientation
 ) {
   try {
-    runOnUiThread {
-      val currentOrientation = activity.resources.configuration.orientation
-      val targetOrientation = when (orientation) {
-        ScreenOrientation.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        ScreenOrientation.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-      }
-
-      if (currentOrientation != targetOrientation) {
-        activity.requestedOrientation = targetOrientation
-        this.waitForIdle()
-      }
+    val currentOrientation = activity.resources.configuration.orientation
+    val targetOrientation = when (orientation) {
+      ScreenOrientation.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+      ScreenOrientation.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
     }
+
+    if (currentOrientation != targetOrientation) {
+      runOnUiThread {
+        activity.requestedOrientation = targetOrientation
+      }
+      this.waitForIdle()
+    }
+
   } catch (e: NullPointerException) {
     if (e.message?.contains("Activity has been destroyed already") == false) {
       throw e

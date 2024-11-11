@@ -105,14 +105,16 @@ private fun MediaPage(
 
   FlickToDismiss(
     state = flickState,
-    modifier = Modifier.background(backgroundColorFor(flickState.gestureState)),
+    modifier = modifier.background(backgroundColorFor(flickState.gestureState)),
   ) {
     when (model) {
       is MediaItem.Image -> {
         // TODO: handle errors here.
         val imageState = rememberZoomableImageState(zoomableState)
         ZoomableAsyncImage(
-          modifier = modifier.focusRequester(focusRequester),
+          modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(focusRequester),
           state = imageState,
           model = ImageRequest.Builder(LocalContext.current)
             .data(model.fullSizedUrl)

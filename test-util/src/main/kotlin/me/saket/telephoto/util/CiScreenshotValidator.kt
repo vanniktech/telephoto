@@ -2,6 +2,7 @@ package me.saket.telephoto.util
 
 import android.content.Context
 import android.provider.Settings
+import androidx.annotation.FloatRange
 import com.dropbox.differ.ImageComparator
 import com.dropbox.dropshots.ResultValidator
 import com.dropbox.dropshots.ThresholdValidator
@@ -14,7 +15,7 @@ class CiScreenshotValidator(
    * Overridden by some tests that require a higher
    * tolerance on CI due to machine differences.
    */
-  var tolerancePercentOnCi: Float,
+  @FloatRange(from = 0.0, to = 100.0) var tolerancePercentOnCi: Float,
 ) : ResultValidator {
 
   override fun invoke(result: ImageComparator.ComparisonResult): Boolean {

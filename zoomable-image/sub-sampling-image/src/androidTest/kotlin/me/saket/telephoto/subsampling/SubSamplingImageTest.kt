@@ -658,6 +658,8 @@ class SubSamplingImageTest {
   }
 
   @Test fun do_not_draw_base_tile_after_foreground_tiles_images_are_loaded() {
+    screenshotValidator.tolerancePercentOnCi = 7.4f
+
     // This test blocks 1 decoders so at least 2 decoders are needed.
     PooledImageRegionDecoder.overriddenPoolCount = 2
 

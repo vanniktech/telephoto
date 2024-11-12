@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
 import com.dropbox.dropshots.Dropshots
 import com.google.testing.junit.testparameterinjector.TestParameter
 import com.google.testing.junit.testparameterinjector.TestParameterInjector
@@ -81,6 +82,7 @@ import org.junit.rules.TestName
 import org.junit.rules.Timeout
 import org.junit.runner.RunWith
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(TestParameterInjector::class)
@@ -716,6 +718,50 @@ class SubSamplingImageTest {
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_loading_all_tiles]")
+    }
+  }
+
+  @Test fun do_not_load_images_for_tiles_that_are_not_visible() {
+    val decodedRegionCount = AtomicInteger(0)
+    val recordingDecoderFactory = ImageRegionDecoder.Factory { params ->
+      val real = AndroidImageRegionDecoder.Factory.create(params)
+      object : ImageRegionDecoder by real {
+        override suspend fun decodeRegion(region: ImageRegionTile) =
+          real.decodeRegion(region).also {
+            if (region.sampleSize == ImageSampleSize(1)) {
+              decodedRegionCount.incrementAndGet()
+            }
+          }
+      }
+    }
+
+    lateinit var imageState: SubSamplingImageState
+    rule.setContent {
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
+      CompositionLocalProvider(LocalImageRegionDecoderFactory provides recordingDecoderFactory) {
+        imageState = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+        )
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .zoomable(zoomableState)
+            .testTag("image"),
+          state = imageState,
+          contentDescription = null,
+        )
+      }
+    }
+
+    rule.waitUntil { imageState.isImageDisplayed }
+    rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+
+    rule.waitUntil(3.seconds) { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      assertThat(decodedRegionCount.get()).isEqualTo(4)
     }
   }
 

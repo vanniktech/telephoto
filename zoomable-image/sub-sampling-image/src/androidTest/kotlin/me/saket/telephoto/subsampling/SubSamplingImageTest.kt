@@ -24,7 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
@@ -36,6 +39,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import assertk.assertThat
@@ -248,7 +252,7 @@ class SubSamplingImageTest {
     // This test blocks 2 decoders indefinitely so at least 3 decoders are needed.
     PooledImageRegionDecoder.overriddenPoolCount = 3
 
-    // This fake image factory will ignore decoding of selected tiles.
+    // This fake image factory will only decode the base tile.
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
@@ -653,6 +657,76 @@ class SubSamplingImageTest {
     // todo.
   }
 
+  @Test fun do_not_draw_base_tile_after_foreground_tiles_images_are_loaded() {
+    // This test blocks 1 decoders indefinitely so at least 2 decoders are needed.
+    PooledImageRegionDecoder.overriddenPoolCount = 2
+
+    val mutexForDecodingLastTile = Mutex(locked = true)
+
+    val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
+      val real = AndroidImageRegionDecoder.Factory.create(params)
+      object : ImageRegionDecoder by real {
+        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
+          println("decodeRegion -> $region")
+          return if (region.sampleSize == ImageSampleSize(1)) {
+            if (region.bounds.topLeft == IntOffset(4864, 1200)) {
+              mutexForDecodingLastTile.lock()
+            }
+            ColorPainter(Color.Yellow.copy(alpha = 0.5f))
+
+//            TintedPainter(
+//              delegate = real.decodeRegion(region),
+//              tint = Color.Red,
+//            )
+          } else {
+            real.decodeRegion(region)
+          }
+        }
+      }
+    }
+
+    lateinit var imageState: SubSamplingImageState
+    rule.setContent {
+      val zoomableState = rememberZoomableState(
+        zoomSpec = ZoomSpec(maxZoomFactor = 1f)
+      )
+      CompositionLocalProvider(LocalImageRegionDecoderFactory provides fakeRegionDecoderFactory) {
+        imageState = rememberSubSamplingImageState(
+          zoomableState = zoomableState,
+          imageSource = SubSamplingImageSource.asset("pahade.jpg"),
+        )
+        SubSamplingImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .zoomable(zoomableState)
+            .testTag("image"),
+          state = imageState,
+          contentDescription = null,
+        )
+      }
+    }
+
+    rule.waitUntil { imageState.isImageDisplayed }
+    rule.onNodeWithTag("image").performTouchInput { doubleClick() }
+    rule.waitForIdle()
+
+    rule.waitUntil {
+      // Wait until all but the delayed tile are loaded.
+      imageState.asReal().viewportImageTiles.count { !it.isBase && it.painter != null } == 3
+    }
+    rule.runOnIdle {
+      // The base image should still be visible behind the foreground tiles.
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_loading_all_tiles]")
+    }
+
+    mutexForDecodingLastTile.unlock()
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_loading_all_tiles]")
+    }
+  }
+
   // Regression test for https://github.com/saket/telephoto/issues/110
   @Test fun unknown_color_space() {
     val bitmap = rule.activity.assets.open("grayscale.jpg").use {
@@ -750,6 +824,16 @@ class SubSamplingImageTest {
     LargeLandscapeImage(SubSamplingImageSource.asset("pahade.jpg")),
     LargePortraitImage(SubSamplingImageSource.resource(R.drawable.cat_1920)),
     SmallSquareImage(SubSamplingImageSource.asset("smol.jpg")),
+  }
+
+  private class TintedPainter(val delegate: Painter, private val tint: Color) : Painter() {
+    override val intrinsicSize: Size get() = delegate.intrinsicSize
+
+    override fun DrawScope.onDraw() {
+      with(delegate) {
+        draw(size, colorFilter = ColorFilter.tint(tint))
+      }
+    }
   }
 }
 

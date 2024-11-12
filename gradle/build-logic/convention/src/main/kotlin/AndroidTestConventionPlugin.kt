@@ -58,7 +58,11 @@ class AndroidTestConventionPlugin : Plugin<Project> {
       version.set(libs.findVersion("emulatorWtfCli").get().toString())
       devices.set(
         listOf(
-          mapOf("model" to "Pixel7Atd", "version" to 31)
+          mapOf(
+            "model" to "Pixel7Atd",
+            "version" to 31,
+            "gpu" to "software",  // Disable GPU acceleration to prevent screenshot differences.
+          )
         )
       )
       @Suppress("SdCardPath")

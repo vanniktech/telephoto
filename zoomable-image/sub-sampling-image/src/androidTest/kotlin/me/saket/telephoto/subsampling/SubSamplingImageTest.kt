@@ -24,9 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -658,7 +656,7 @@ class SubSamplingImageTest {
   }
 
   @Test fun do_not_draw_base_tile_after_foreground_tiles_images_are_loaded() {
-    // This test blocks 1 decoders indefinitely so at least 2 decoders are needed.
+    // This test blocks 1 decoders so at least 2 decoders are needed.
     PooledImageRegionDecoder.overriddenPoolCount = 2
 
     val mutexForDecodingLastTile = Mutex(locked = true)
@@ -667,17 +665,11 @@ class SubSamplingImageTest {
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
         override suspend fun decodeRegion(region: ImageRegionTile): Painter {
-          println("decodeRegion -> $region")
           return if (region.sampleSize == ImageSampleSize(1)) {
             if (region.bounds.topLeft == IntOffset(4864, 1200)) {
               mutexForDecodingLastTile.lock()
             }
             ColorPainter(Color.Yellow.copy(alpha = 0.5f))
-
-//            TintedPainter(
-//              delegate = real.decodeRegion(region),
-//              tint = Color.Red,
-//            )
           } else {
             real.decodeRegion(region)
           }
@@ -824,16 +816,6 @@ class SubSamplingImageTest {
     LargeLandscapeImage(SubSamplingImageSource.asset("pahade.jpg")),
     LargePortraitImage(SubSamplingImageSource.resource(R.drawable.cat_1920)),
     SmallSquareImage(SubSamplingImageSource.asset("smol.jpg")),
-  }
-
-  private class TintedPainter(val delegate: Painter, private val tint: Color) : Painter() {
-    override val intrinsicSize: Size get() = delegate.intrinsicSize
-
-    override fun DrawScope.onDraw() {
-      with(delegate) {
-        draw(size, colorFilter = ColorFilter.tint(tint))
-      }
-    }
   }
 }
 

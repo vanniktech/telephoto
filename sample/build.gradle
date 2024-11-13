@@ -38,7 +38,10 @@ android {
     lintConfig = file("lint.xml")
     abortOnError = System.getenv("CI") == null
   }
-  buildFeatures.compose = true
+  buildFeatures {
+    compose = true
+    buildConfig = true
+  }
   composeOptions.kotlinCompilerExtensionVersion = libs.versions.androidx.compose.compiler.get()
 }
 

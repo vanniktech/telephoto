@@ -42,8 +42,8 @@ interface ZoomableContentTransformation {
    * to zoom gestures. This value represents the scaling factor that should be applied
    * to the content to achieve the desired zoom level.
    *
-   * Values on both the axes can be less than 0 if the image size is larger than
-   * its layout size.
+   * Values on both the axes can be less than 0 if the content size is larger than
+   * its viewport size.
    */
   val scale: ScaleFactor
 

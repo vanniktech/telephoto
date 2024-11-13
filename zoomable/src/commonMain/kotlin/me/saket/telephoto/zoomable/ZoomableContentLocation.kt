@@ -117,7 +117,7 @@ interface ZoomableContentLocation {
 
   /**
    * The default value of [ZoomableContentLocation], intended to be used for content that
-   * fills every pixel of its layout size.
+   * fills every pixel of its viewport size.
    *
    * For richer content such as images whose visual size may not always match its layout
    * size, you should provide a different value using [ZoomableState.setContentLocation].

@@ -33,7 +33,7 @@ class ZoomableContentLocationTest {
 
   private val ZoomableContentLocation.isSpecified: Boolean
     get() {
-      val layoutSize = Size(width = Random.nextInt(0, 1000).toFloat(), height = Random.nextInt(0, 1000).toFloat())
-      return this != ZoomableContentLocation.Unspecified && location(layoutSize, LayoutDirection.Ltr).size.isSpecified
+      val viewportSize = Size(width = Random.nextInt(0, 1000).toFloat(), height = Random.nextInt(0, 1000).toFloat())
+      return this != ZoomableContentLocation.Unspecified && location(viewportSize, LayoutDirection.Ltr).size.isSpecified
     }
 }

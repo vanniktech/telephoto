@@ -147,7 +147,7 @@ fun ZoomableImage(
       }
       Image(
         modifier = Modifier
-          .onSizeChanged { boundsProvider.layoutSize = it }
+          .onSizeChanged { boundsProvider.viewportSize = it }
           .zoomable(
             // Handle gestures, but ignore their transformations. This will prevent
             // FlickToDismiss() (and other gesture containers) from accidentally dismissing

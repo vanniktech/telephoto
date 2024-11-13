@@ -125,7 +125,7 @@ internal class RealZoomableState internal constructor(
   /**
    * Layout bounds of the zoomable content in the UI hierarchy, without any scaling applied.
    */
-  internal var contentLayoutSize: Size by mutableStateOf(Size.Unspecified)
+  internal var viewportSize: Size by mutableStateOf(Size.Unspecified)
 
   private var gestureState: GestureStateCalculator by mutableStateOf(
     GestureStateCalculator { inputs ->
@@ -138,29 +138,29 @@ internal class RealZoomableState internal constructor(
         ?: GestureState(
           userZoom = UserZoomFactor(1f),
           userOffset = UserOffset(Offset.Zero),
-          lastCentroid = inputs.contentLayoutSize.center,
+          lastCentroid = inputs.viewportSize.center,
         )
     }
   )
 
   private val gestureStateInputs: GestureStateInputsCalculator by derivedStateOf {
-    GestureStateInputsCalculator { contentLayoutSize ->
+    GestureStateInputsCalculator { viewportSize ->
       if (isReadyToInteract) {
         val unscaledContentBounds = unscaledContentLocation.location(
-          layoutSize = contentLayoutSize,
+          layoutSize = viewportSize,
           direction = layoutDirection
         )
         val baseZoomFactor = BaseZoomFactor(
           contentScale.computeScaleFactor(
             srcSize = unscaledContentBounds.size,
-            dstSize = contentLayoutSize,
+            dstSize = viewportSize,
           )
         )
         check(baseZoomFactor.value != ScaleFactor.Zero) {
-          "Base zoom shouldn't be zero. content bounds = $unscaledContentBounds, layout size = $contentLayoutSize"
+          "Base zoom shouldn't be zero. content bounds = $unscaledContentBounds, viewport size = $viewportSize"
         }
         GestureStateInputs(
-          contentLayoutSize = contentLayoutSize,
+          viewportSize = viewportSize,
           baseZoom = baseZoomFactor,
           unscaledContentBounds = unscaledContentBounds,
           contentAlignment = contentAlignment,
@@ -193,9 +193,9 @@ internal class RealZoomableState internal constructor(
    * listening to pan & zoom gestures.
    */
   internal val isReadyToInteract: Boolean by derivedStateOf {
-    contentLayoutSize.isSpecifiedAndNonEmpty
+    viewportSize.isSpecifiedAndNonEmpty
       && unscaledContentLocation != ZoomableContentLocation.Unspecified
-      && unscaledContentLocation.location(contentLayoutSize, layoutDirection).size.isSpecifiedAndNonEmpty
+      && unscaledContentLocation.location(viewportSize, layoutDirection).size.isSpecifiedAndNonEmpty
   }
 
   @Suppress("NAME_SHADOWING")
@@ -364,7 +364,7 @@ internal class RealZoomableState internal constructor(
       finalOffset.withZoomAndTranslate(zoom = -proposedZoom.finalZoom(), translate = scaledTopLeft) {
         val expectedDrawRegion = Rect(it, unscaledContentBounds.size * proposedZoom).throwIfDrawRegionIsTooLarge()
         expectedDrawRegion.calculateTopLeftToOverlapWith(
-          destination = inputs.contentLayoutSize,
+          destination = inputs.viewportSize,
           alignment = inputs.contentAlignment,
           layoutDirection = inputs.layoutDirection,
         )
@@ -419,7 +419,7 @@ internal class RealZoomableState internal constructor(
     )
     animateZoomTo(
       targetZoom = targetZoom,
-      centroid = centroid.takeOrElse { gestureStateInputs.contentLayoutSize.center },
+      centroid = centroid.takeOrElse { gestureStateInputs.viewportSize.center },
       mutatePriority = MutatePriority.UserInput,
       animationSpec = animationSpec,
     )
@@ -575,7 +575,7 @@ internal class RealZoomableState internal constructor(
   }
 
   private fun calculateGestureStateInputs(): GestureStateInputs? {
-    return gestureStateInputs.calculate(contentLayoutSize)
+    return gestureStateInputs.calculate(viewportSize)
   }
 
   private fun calculateGestureState(): GestureState? {
@@ -629,7 +629,7 @@ internal data class GestureState(
 )
 
 internal data class GestureStateInputs(
-  val contentLayoutSize: Size,
+  val viewportSize: Size,
   val baseZoom: BaseZoomFactor,
   val unscaledContentBounds: Rect,
   val contentAlignment: Alignment,
@@ -638,7 +638,7 @@ internal data class GestureStateInputs(
   fun calculateOffsetForAlignment(): Offset {
     val alignmentOffset = contentAlignment.align(
       size = (unscaledContentBounds.size * baseZoom.value).roundToIntSize(),
-      space = contentLayoutSize.roundToIntSize(),
+      space = viewportSize.roundToIntSize(),
       layoutDirection = layoutDirection,
     )
     // Take the content's top-left into account because it may not start at 0,0.
@@ -653,7 +653,7 @@ private fun interface GestureStateCalculator {
 
 @Immutable
 private fun interface GestureStateInputsCalculator {
-  fun calculate(contentLayoutSize: Size): GestureStateInputs?
+  fun calculate(viewportSize: Size): GestureStateInputs?
 }
 
 /**

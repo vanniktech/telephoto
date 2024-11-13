@@ -20,13 +20,13 @@ import me.saket.telephoto.zoomable.ZoomableContentLocation
  * ensures that the bounds aren't empty while a placeholder image is visible.
  */
 internal data class PlaceholderBoundsProvider(val contentSize: Size) {
-  var layoutSize: IntSize? by mutableStateOf(null)
+  var viewportSize: IntSize? by mutableStateOf(null)
 
   @Stable
   fun calculate(state: RealZoomableState): Rect? {
-    val layoutSize = layoutSize ?: return null
+    val viewportSize = viewportSize ?: return null
 
-    return if (contentSize.isSpecified) {
+    val locationProvider = if (contentSize.isSpecified) {
       RelativeContentLocation(
         size = contentSize,
         scale = state.contentScale,
@@ -34,8 +34,9 @@ internal data class PlaceholderBoundsProvider(val contentSize: Size) {
       )
     } else {
       ZoomableContentLocation.SameAsLayoutBounds
-    }.location(
-      layoutSize = layoutSize.toSize(),
+    }
+    return locationProvider.location(
+      layoutSize = viewportSize.toSize(),
       direction = state.layoutDirection,
     )
   }

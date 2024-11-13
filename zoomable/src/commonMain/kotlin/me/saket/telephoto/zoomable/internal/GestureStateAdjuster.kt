@@ -38,7 +38,7 @@ internal class GestureStateAdjuster(
     // center) back to the viewport's center. The anchor is present in the content's coordinate
     // space so it will be be transformed to the viewport space for the scope of this calculation.
     val newUserOffset = oldContentOffsetAtViewportCenter.withZoom(newZoom.finalZoom()) { anchorInViewportSpace ->
-      anchorInViewportSpace - inputs.contentLayoutSize.center
+      anchorInViewportSpace - inputs.viewportSize.center
     }
 
     val proposedContentOffset = ContentOffset.forFinalOffset(
@@ -49,7 +49,7 @@ internal class GestureStateAdjuster(
     return GestureState(
       userOffset = coerceWithinBounds(proposedContentOffset, newZoom).userOffset,
       userZoom = newZoom.userZoom,
-      lastCentroid = inputs.contentLayoutSize.center
+      lastCentroid = inputs.viewportSize.center
     )
   }
 

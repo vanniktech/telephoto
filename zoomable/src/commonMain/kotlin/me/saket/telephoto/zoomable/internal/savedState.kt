@@ -38,7 +38,7 @@ internal data class ZoomableSavedState private constructor(
       userOffset = gestureState.userOffset.value.packToLong(),
       userZoom = gestureState.userZoom.value,
       centroid = gestureState.lastCentroid.packToLong(),
-      stateRestorerInfo = gestureStateInputs.contentLayoutSize
+      stateRestorerInfo = gestureStateInputs.viewportSize
         .takeIf { it.isSpecifiedAndNonEmpty }
         ?.let { viewportSize ->
           StateRestorerInfo(
@@ -65,7 +65,7 @@ internal data class ZoomableSavedState private constructor(
     val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && userZoom == 1f
     if (
       wasGestureStateEmpty
-      || (stateRestorerInfo == null || stateRestorerInfo.viewportSize.unpackAsSize() == inputs.contentLayoutSize)
+      || (stateRestorerInfo == null || stateRestorerInfo.viewportSize.unpackAsSize() == inputs.viewportSize)
     ) {
       return GestureState(
         userOffset = UserOffset(restoredUserOffset),

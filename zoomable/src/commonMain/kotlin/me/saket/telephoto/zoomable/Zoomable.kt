@@ -56,7 +56,7 @@ fun Modifier.zoomable(
     .thenIf(clipToBounds) {
       Modifier.clipToBounds()
     }
-    .onSizeChanged { state.contentLayoutSize = it.toSize() }
+    .onSizeChanged { state.viewportSize = it.toSize() }
     .then(
       ZoomableElement(
         state = state,

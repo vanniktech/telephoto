@@ -6,20 +6,26 @@ A _drop-in_ replacement for async `Image()` composables featuring support for pa
 
 **Features**
 
-- [Sub-sampling](sub-sampling.md) of bitmaps
-- Pinch to zoom and flings
-- Double click to zoom
-- Single finger zoom (double click and hold)
-- Haptic feedback for over/under zoom
+- Automatic [Sub-sampling](sub-sampling.md) of bitmaps
+- Gestures:
+  - Pinch-to-zoom and flings
+  - Double click to zoom
+  - Single finger zoom (double-tap and hold)
+- Haptic feedback when reaching zoom limits
 - Compatibility with nested scrolling
 - Click listeners
 - [Keyboard and mouse shortcuts](#keyboard-shortcuts)
+- State preservation across config changes (including screen rotations)
 
 ### Installation
 
 === "Coil"
     ```groovy
+    // For Coil 2.x
     implementation("me.saket.telephoto:zoomable-image-coil:{{ versions.telephoto }}")
+
+    // For Coil 3.x
+    implementation("me.saket.telephoto:zoomable-image-coil3:{{ versions.telephoto }}")
     ```
 === "Glide"
     ```groovy

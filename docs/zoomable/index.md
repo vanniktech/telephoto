@@ -1,14 +1,18 @@
 # Modifier.zoomable()
 
-A `Modifier` for handling pan & zoom gestures, designed to be shared across all your media composables so that your users can use the same familiar gestures throughout your app. It offers,
+A `Modifier` for handling pan & zoom gestures, designed to be shared across all your media composables so that your users can use the same familiar gestures throughout your app. 
 
-- Pinch to zoom and flings
-- Double click to zoom
-- Single finger zoom (double click and hold)
-- Haptic feedback for over/under zoom
+**Features**
+
+- Gestures:
+  - Pinch-to-zoom and flings
+  - Double click to zoom
+  - Single finger zoom (double-tap and hold)
+- Haptic feedback when reaching zoom limits
 - Compatibility with nested scrolling
 - Click listeners
 - [Keyboard and mouse shortcuts](#keyboard-shortcuts)
+- State preservation across config changes (including screen rotations)
 
 ### Installation
 
@@ -42,11 +46,9 @@ For preventing your content from over-zooming or over-panning, `Modifier.zoomabl
 For richer content such as an `Image()` whose _visual_ size may not always match its layout size, `Modifier.zoomable()` will need your assistance.
 
 ```kotlin hl_lines="5-7"
-val state = rememberZoomableState()
 val painter = resourcePainter(R.drawable.example)
-
-LaunchedEffect(painter.intrinsicSize) {
-  state.setContentLocation(
+val zoomableState = rememberZoomableState().apply {
+  setContentLocation(
     ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
   )
 }
@@ -55,7 +57,7 @@ Image(
   modifier = Modifier
     .fillMaxSize()
     .background(Color.Orange)
-    .zoomable(state),
+    .zoomable(zoomableState),
   painter = painter,
   contentDescription = …,
   contentScale = ContentScale.Inside,

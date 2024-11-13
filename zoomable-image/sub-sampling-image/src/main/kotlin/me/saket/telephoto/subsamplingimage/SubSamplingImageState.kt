@@ -69,7 +69,7 @@ fun rememberSubSamplingImageState(
     }
   }
 
-  zoomableState.setContentLocationSynchronously(
+  zoomableState.setContentLocation(
     ZoomableContentLocation.unscaledAndTopLeftAligned(state.imageSize?.toSize())
   )
   return state

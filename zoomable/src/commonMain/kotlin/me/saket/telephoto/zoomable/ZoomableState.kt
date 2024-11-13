@@ -82,7 +82,7 @@ sealed interface ZoomableState {
 
   /**
    * The visual bounds of the content, calculated by applying the scale and translation of pan and zoom
-   * gestures to the value given to [ZoomableState.setContentLocationSynchronously]. Useful for drawing decorations
+   * gestures to the value given to [ZoomableState.setContentLocation]. Useful for drawing decorations
    * around the content or performing hit tests.
    */
   val transformedContentBounds: Rect
@@ -102,7 +102,7 @@ sealed interface ZoomableState {
   val zoomSpec: ZoomSpec
 
   /** See [ZoomableContentLocation]. */
-  fun setContentLocationSynchronously(location: ZoomableContentLocation)
+  fun setContentLocation(location: ZoomableContentLocation)
 
   /**
    * Reset content to its minimum zoom and zero offset and suspend until it's finished.
@@ -172,11 +172,14 @@ sealed interface ZoomableState {
 
   /** See [ZoomableContentLocation]. */
   @Deprecated(
-    message = "Use setContentLocationSynchronously() instead",
-    replaceWith = ReplaceWith("setContentLocationSynchronously")
+    message = "Use setContentLocation() instead",
+    replaceWith = ReplaceWith("setContentLocation"),
+    level = DeprecationLevel.HIDDEN,
   )
-  suspend fun setContentLocation(location: ZoomableContentLocation) {
-    setContentLocationSynchronously(location)
+  @Suppress("INAPPLICABLE_JVM_NAME")  // https://youtrack.jetbrains.com/issue/KT-31420
+  @JvmName("setContentLocation")
+  suspend fun setContentLocationSuspending(location: ZoomableContentLocation) {
+    setContentLocation(location)
   }
 
   companion object {

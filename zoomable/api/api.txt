@@ -164,8 +164,8 @@ package me.saket.telephoto.zoomable {
     method @Deprecated public default suspend Object? resetZoom(boolean withAnimation, kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public void setAutoApplyTransformations(boolean);
     method public void setContentAlignment(androidx.compose.ui.Alignment);
+    method public void setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location);
     method @Deprecated public default suspend Object? setContentLocation(me.saket.telephoto.zoomable.ZoomableContentLocation location, kotlin.coroutines.Continuation<? super kotlin.Unit>);
-    method public void setContentLocationSynchronously(me.saket.telephoto.zoomable.ZoomableContentLocation location);
     method public void setContentScale(androidx.compose.ui.layout.ContentScale);
     method public suspend Object? zoomBy(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);
     method public suspend Object? zoomTo(float zoomFactor, optional long centroid, optional androidx.compose.animation.core.AnimationSpec<java.lang.Float> animationSpec, optional kotlin.coroutines.Continuation<? super kotlin.Unit>);

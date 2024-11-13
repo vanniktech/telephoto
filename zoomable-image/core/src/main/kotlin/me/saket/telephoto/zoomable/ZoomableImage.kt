@@ -189,7 +189,7 @@ fun ZoomableImage(
 
       is ZoomableImageSource.PainterDelegate -> {
         val painter = delegate.painter ?: EmptyPainter
-        state.zoomableState.setContentLocationSynchronously(
+        state.zoomableState.setContentLocation(
           ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
         )
         Image(

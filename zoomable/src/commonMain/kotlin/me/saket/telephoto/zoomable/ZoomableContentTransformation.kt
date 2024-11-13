@@ -31,7 +31,7 @@ interface ZoomableContentTransformation {
 
   /**
    * The size of the zoomable content that is currently known to [Modifier.zoomable].
-   * This is calculated using the value given to [ZoomableState.setContentLocationSynchronously] and
+   * This is calculated using the value given to [ZoomableState.setContentLocation] and
    * does not account for the zoom and pan transformations. Useful for synchronizing
    * other elements with the zoomable content.
    */

@@ -131,7 +131,7 @@ internal class RealZoomableState internal constructor(
     GestureStateCalculator { inputs ->
       savedState?.asGestureState(
         inputs = inputs,
-        coerceWithinBounds = { contentOffset, contentZoom ->
+        coerceOffsetWithinBounds = { contentOffset, contentZoom ->
           contentOffset.coerceWithinContentBounds(contentZoom, inputs)
         }
       )
@@ -724,6 +724,13 @@ internal data class ContentZoomFactor(
       return ContentZoomFactor(
         baseZoom = baseZoom,
         userZoom = UserZoomFactor(finalZoom / baseZoom.value.maxScale),
+      )
+    }
+
+    fun forFinalZoom(baseZoom: BaseZoomFactor, finalZoom: ScaleFactor): ContentZoomFactor {
+      return ContentZoomFactor(
+        baseZoom = baseZoom,
+        userZoom = UserZoomFactor(finalZoom.maxScale / baseZoom.value.maxScale),
       )
     }
   }

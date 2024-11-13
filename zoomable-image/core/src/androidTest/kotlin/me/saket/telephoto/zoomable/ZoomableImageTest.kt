@@ -114,6 +114,7 @@ import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.LeftToRight
 import me.saket.telephoto.zoomable.ZoomableImageTest.ScrollDirection.RightToLeft
 import org.junit.After
+import org.junit.AssumptionViolatedException
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -1496,7 +1497,15 @@ class ZoomableImageTest {
   // todo: should probably move these tests to ZoomableTest.
   @Test fun non_empty_transformations_are_retained_across_orientation_change(
     @TestParameter contentScaleParam: ContentScaleParamWithDifferentProportions,
+    @TestParameter imageOrientationParam: ImageOrientationParam,
   ) {
+    if (
+      imageOrientationParam == ImageOrientationParam.Landscape
+      && contentScaleParam != ContentScaleParamWithDifferentProportions.Fit
+    ) {
+      throw AssumptionViolatedException("not needed")
+    }
+
     lateinit var imageState: ZoomableImageState
 
     val recreationTester = ActivityRecreationTester(rule)
@@ -1509,7 +1518,7 @@ class ZoomableImageTest {
           .fillMaxSize()
           .border(1.dp, Color.Yellow)
           .testTag("image"),
-        image = ZoomableImageSource.asset("cat_1920.jpg", subSample = true),
+        image = ZoomableImageSource.asset(imageOrientationParam.assetName, subSample = true),
         state = imageState,
         contentDescription = null,
         contentScale = contentScaleParam.value,
@@ -1520,8 +1529,12 @@ class ZoomableImageTest {
     (rule.onNodeWithTag("image")).run {
       performTouchInput { doubleClick(center - Offset(0f, 360f)) }
     }
+    rule.waitForIdle()
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+
+    val zoomFractionBeforeRotation = imageState.zoomableState.zoomFraction
     rule.runOnIdle {
+      assertThat(zoomFractionBeforeRotation).isEqualTo(1f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_rotation]")
     }
 
@@ -1540,6 +1553,7 @@ class ZoomableImageTest {
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
+      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(zoomFractionBeforeRotation)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_another_rotation]")
     }
   }
@@ -1577,6 +1591,7 @@ class ZoomableImageTest {
 
     rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
+      assertThat(imageState.zoomableState.zoomFraction).isEqualTo(0f)
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_rotation]")
     }
   }
@@ -1723,6 +1738,12 @@ class ZoomableImageTest {
   enum class ContentScaleParamWithDifferentProportions(val value: ContentScale) {
     Fit(ContentScale.Fit),          // Scaling is proportionate.
     Fill(ContentScale.FillBounds),  // Scaling is disproportionate
+  }
+
+  @Suppress("unused")
+  enum class ImageOrientationParam(val assetName: String) {
+    Portrait("cat_1920.jpg"),
+    Landscape("fox_1500.jpg")
   }
 
   @Suppress("unused")

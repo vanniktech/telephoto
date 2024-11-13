@@ -20,7 +20,7 @@ internal data class ZoomableSavedState private constructor(
   private val userOffset: Long,
   private val userZoom: Float,
   private val centroid: Long,
-  private val stateRestorerInfo: StateRestorerInfo?,
+  private val stateAdjusterInfo: StateRestorerInfo?,
 ) : AndroidParcelable {
 
   @AndroidParcelize
@@ -38,7 +38,7 @@ internal data class ZoomableSavedState private constructor(
       userOffset = gestureState.userOffset.value.packToLong(),
       userZoom = gestureState.userZoom.value,
       centroid = gestureState.lastCentroid.packToLong(),
-      stateRestorerInfo = gestureStateInputs.viewportSize
+      stateAdjusterInfo = gestureStateInputs.viewportSize
         .takeIf { it.isSpecifiedAndNonEmpty }
         ?.let { viewportSize ->
           StateRestorerInfo(
@@ -59,13 +59,13 @@ internal data class ZoomableSavedState private constructor(
 
   fun asGestureState(
     inputs: GestureStateInputs,
-    coerceWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
+    coerceOffsetWithinBounds: (ContentOffset, ContentZoomFactor) -> ContentOffset,
   ): GestureState {
     val restoredUserOffset = userOffset.unpackAsOffset()
     val wasGestureStateEmpty = restoredUserOffset == Offset.Zero && userZoom == 1f
     if (
       wasGestureStateEmpty
-      || (stateRestorerInfo == null || stateRestorerInfo.viewportSize.unpackAsSize() == inputs.viewportSize)
+      || (stateAdjusterInfo == null || stateAdjusterInfo.viewportSize.unpackAsSize() == inputs.viewportSize)
     ) {
       return GestureState(
         userOffset = UserOffset(restoredUserOffset),
@@ -79,12 +79,12 @@ internal data class ZoomableSavedState private constructor(
     // Treat the content offset at the viewport's center as the anchor and adjust the gesture state
     // to maintain the anchor's position in the new viewport.
     val stateAdjuster = GestureStateAdjuster(
-      oldUserZoom = UserZoomFactor(userZoom),
-      oldContentOffsetAtViewportCenter = stateRestorerInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
+      oldFinalZoom = stateAdjusterInfo.finalZoomFactor.unpackAsScaleFactor(),
+      oldContentOffsetAtViewportCenter = stateAdjusterInfo.contentOffsetAtViewportCenter.unpackAsOffset(),
     )
     return stateAdjuster.adjustForNewViewportSize(
       inputs = inputs,
-      coerceWithinBounds = coerceWithinBounds,
+      coerceWithinBounds = coerceOffsetWithinBounds,
     )
   }
 }

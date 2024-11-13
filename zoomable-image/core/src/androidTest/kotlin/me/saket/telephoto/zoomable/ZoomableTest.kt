@@ -95,7 +95,7 @@ class ZoomableTest {
       zoomableState = rememberZoomableState(
         autoApplyTransformations = false
       )
-      zoomableState.setContentLocation(ZoomableContentLocation.Unspecified)
+      zoomableState.setContentLocationSynchronously(ZoomableContentLocation.Unspecified)
       Box(
         Modifier
           .fillMaxSize()

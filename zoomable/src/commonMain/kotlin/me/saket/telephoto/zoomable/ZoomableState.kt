@@ -82,7 +82,7 @@ sealed interface ZoomableState {
 
   /**
    * The visual bounds of the content, calculated by applying the scale and translation of pan and zoom
-   * gestures to the value given to [ZoomableState.setContentLocation]. Useful for drawing decorations
+   * gestures to the value given to [ZoomableState.setContentLocationSynchronously]. Useful for drawing decorations
    * around the content or performing hit tests.
    */
   val transformedContentBounds: Rect
@@ -102,7 +102,7 @@ sealed interface ZoomableState {
   val zoomSpec: ZoomSpec
 
   /** See [ZoomableContentLocation]. */
-  fun setContentLocation(location: ZoomableContentLocation)
+  fun setContentLocationSynchronously(location: ZoomableContentLocation)
 
   /**
    * Reset content to its minimum zoom and zero offset and suspend until it's finished.
@@ -169,6 +169,15 @@ sealed interface ZoomableState {
     offset: Offset,
     animationSpec: AnimationSpec<Offset> = DefaultPanAnimationSpec,
   )
+
+  /** See [ZoomableContentLocation]. */
+  @Deprecated(
+    message = "Use setContentLocationSynchronously() instead",
+    replaceWith = ReplaceWith("setContentLocationSynchronously")
+  )
+  suspend fun setContentLocation(location: ZoomableContentLocation) {
+    setContentLocationSynchronously(location)
+  }
 
   companion object {
     val DefaultZoomAnimationSpec: AnimationSpec<Float> get() = spring(stiffness = Spring.StiffnessMediumLow)

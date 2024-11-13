@@ -120,7 +120,7 @@ interface ZoomableContentLocation {
    * fills every pixel of its viewport size.
    *
    * For richer content such as images whose visual size may not always match its layout
-   * size, you should provide a different value using [ZoomableState.setContentLocation].
+   * size, you should provide a different value using [ZoomableState.setContentLocationSynchronously].
    */
   data object SameAsLayoutBounds : ZoomableContentLocation {
     @Suppress("OVERRIDE_DEPRECATION")

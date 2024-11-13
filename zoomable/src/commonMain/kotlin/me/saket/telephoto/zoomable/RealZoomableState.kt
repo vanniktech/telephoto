@@ -390,7 +390,7 @@ internal class RealZoomableState internal constructor(
     }
   }
 
-  override fun setContentLocation(location: ZoomableContentLocation) {
+  override fun setContentLocationSynchronously(location: ZoomableContentLocation) {
     unscaledContentLocation = location
   }
 

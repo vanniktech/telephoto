@@ -80,7 +80,7 @@ class ZoomablePreviewTest {
       val zoomableState = rememberZoomableState().also {
         it.contentScale = ContentScale.Fit
         it.contentAlignment = Alignment.BottomEnd
-        it.setContentLocation(
+        it.setContentLocationSynchronously(
           ZoomableContentLocation.scaledInsideAndCenterAligned(painter.intrinsicSize)
         )
       }

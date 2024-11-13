@@ -106,18 +106,6 @@ sealed interface ZoomableState {
 
   /**
    * Reset content to its minimum zoom and zero offset and suspend until it's finished.
-   */
-  @Deprecated(message = "Use resetZoom(AnimationSpec) instead")
-  suspend fun resetZoom(withAnimation: Boolean) {
-    if (withAnimation) {
-      resetZoom()
-    } else {
-      resetZoom(animationSpec = SnapSpec())
-    }
-  }
-
-  /**
-   * Reset content to its minimum zoom and zero offset and suspend until it's finished.
    *
    * @param animationSpec The animation spec to use or [SnapSpec] for no animation.
    */
@@ -169,6 +157,18 @@ sealed interface ZoomableState {
     offset: Offset,
     animationSpec: AnimationSpec<Offset> = DefaultPanAnimationSpec,
   )
+
+  /**
+   * Reset content to its minimum zoom and zero offset and suspend until it's finished.
+   */
+  @Deprecated(message = "Use resetZoom(AnimationSpec) instead")
+  suspend fun resetZoom(withAnimation: Boolean) {
+    if (withAnimation) {
+      resetZoom()
+    } else {
+      resetZoom(animationSpec = SnapSpec())
+    }
+  }
 
   /** See [ZoomableContentLocation]. */
   @Deprecated(

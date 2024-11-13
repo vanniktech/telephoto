@@ -42,7 +42,7 @@ internal class GestureStateAdjuster(
     }
 
     val proposedContentOffset = ContentOffset.forFinalOffset(
-      baseOffset = inputs.calculateOffsetForAlignment(),
+      baseOffset = inputs.baseOffset,
       finalOffset = newUserOffset,
     )
 

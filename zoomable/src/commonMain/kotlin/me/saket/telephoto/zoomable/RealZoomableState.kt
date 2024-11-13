@@ -150,18 +150,26 @@ internal class RealZoomableState internal constructor(
           layoutSize = viewportSize,
           direction = layoutDirection
         )
-        val baseZoomFactor = BaseZoomFactor(
-          contentScale.computeScaleFactor(
-            srcSize = unscaledContentBounds.size,
-            dstSize = viewportSize,
-          )
+        val baseZoomFactor = contentScale.computeScaleFactor(
+          srcSize = unscaledContentBounds.size,
+          dstSize = viewportSize,
         )
-        check(baseZoomFactor.value != ScaleFactor.Zero) {
+        check(baseZoomFactor != ScaleFactor.Zero) {
           "Base zoom shouldn't be zero. content bounds = $unscaledContentBounds, viewport size = $viewportSize"
+        }
+        val baseOffset = run {
+          val alignmentOffset = contentAlignment.align(
+            size = (unscaledContentBounds.size * baseZoomFactor).roundToIntSize(),
+            space = viewportSize.roundToIntSize(),
+            layoutDirection = layoutDirection,
+          )
+          // Take the content's top-left into account because it may not start at 0,0.
+          unscaledContentBounds.topLeft + (-alignmentOffset.toOffset() / baseZoomFactor)
         }
         GestureStateInputs(
           viewportSize = viewportSize,
-          baseZoom = baseZoomFactor,
+          baseZoom = BaseZoomFactor(baseZoomFactor),
+          baseOffset = baseOffset,
           unscaledContentBounds = unscaledContentBounds,
           contentAlignment = contentAlignment,
           layoutDirection = layoutDirection,
@@ -245,7 +253,7 @@ internal class RealZoomableState internal constructor(
       }
 
       val oldOffset = ContentOffset(
-        baseOffsetForAlignment = inputs.calculateOffsetForAlignment(),
+        baseOffset = inputs.baseOffset,
         userOffset = lastGestureState.userOffset,
       )
       GestureState(
@@ -271,7 +279,7 @@ internal class RealZoomableState internal constructor(
     val currentZoom = ContentZoomFactor(gestureStateInputs.baseZoom, current.userZoom)
     val panDeltaWithZoom = panDelta / currentZoom
     val targetOffset = ContentOffset(
-      baseOffsetForAlignment = gestureStateInputs.calculateOffsetForAlignment(),
+      baseOffset = gestureStateInputs.baseOffset,
       userOffset = current.userOffset - panDeltaWithZoom,
     )
     check(targetOffset.isFinite) {
@@ -458,7 +466,7 @@ internal class RealZoomableState internal constructor(
     val startGestureState = gestureState.calculate(gestureStateInputs)
 
     val startZoom = ContentZoomFactor(gestureStateInputs.baseZoom, startGestureState.userZoom)
-    val startOffset = ContentOffset(gestureStateInputs.calculateOffsetForAlignment(), startGestureState.userOffset)
+    val startOffset = ContentOffset(gestureStateInputs.baseOffset, startGestureState.userOffset)
     val targetOffset = startOffset
       .retainCentroidPositionAfterZoom(
         centroid = centroid,
@@ -631,20 +639,11 @@ internal data class GestureState(
 internal data class GestureStateInputs(
   val viewportSize: Size,
   val baseZoom: BaseZoomFactor,
+  val baseOffset: Offset,
   val unscaledContentBounds: Rect,
   val contentAlignment: Alignment,
   val layoutDirection: LayoutDirection,
-) {
-  fun calculateOffsetForAlignment(): Offset {
-    val alignmentOffset = contentAlignment.align(
-      size = (unscaledContentBounds.size * baseZoom.value).roundToIntSize(),
-      space = viewportSize.roundToIntSize(),
-      layoutDirection = layoutDirection,
-    )
-    // Take the content's top-left into account because it may not start at 0,0.
-    return unscaledContentBounds.topLeft + (-alignmentOffset.toOffset() / baseZoom.value)
-  }
-}
+)
 
 @Immutable
 private fun interface GestureStateCalculator {
@@ -743,24 +742,24 @@ internal data class ContentOffset(
    * The minimum offset needed to position the content within its layout
    * bounds with respect to [ZoomableState.contentAlignment].
    * */
-  private val baseOffsetForAlignment: Offset,
+  private val baseOffset: Offset,
   val userOffset: UserOffset,
 ) {
   val isFinite: Boolean get() = finalOffset().isFinite
 
-  fun finalOffset(): Offset = baseOffsetForAlignment + userOffset.value
+  fun finalOffset(): Offset = baseOffset + userOffset.value
 
   fun transformUserOffset(block: (finalOffset: Offset) -> Offset): ContentOffset {
     val transformed = block(finalOffset())
     return this.copy(
-      userOffset = UserOffset(transformed - this.baseOffsetForAlignment)
+      userOffset = UserOffset(transformed - this.baseOffset)
     )
   }
 
   companion object {
     fun forFinalOffset(baseOffset: Offset, finalOffset: Offset): ContentOffset {
       return ContentOffset(
-        baseOffsetForAlignment = baseOffset,
+        baseOffset = baseOffset,
         userOffset = UserOffset(finalOffset - baseOffset),
       )
     }

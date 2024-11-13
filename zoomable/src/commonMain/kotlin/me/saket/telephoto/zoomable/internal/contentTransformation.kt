@@ -34,7 +34,7 @@ internal data class RealZoomableContentTransformation(
         userZoom = gestureState.userZoom,
       )
       val contentOffset = ContentOffset(
-        baseOffsetForAlignment = gestureStateInputs.calculateOffsetForAlignment(),
+        baseOffset = gestureStateInputs.baseOffset,
         userOffset = gestureState.userOffset,
       )
       val contentSize = gestureStateInputs.unscaledContentBounds.size

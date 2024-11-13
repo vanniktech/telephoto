@@ -2,8 +2,11 @@ package me.saket.telephoto.zoomable
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.test.ext.junit.rules.ActivityScenarioRule
+import me.saket.telephoto.util.waitUntil
+import kotlin.time.Duration.Companion.seconds
 
 // Workaround for https://issuetracker.google.com/issues/271226817.
 // Based on https://issuetracker.google.com/issues/271226817#comment5.
@@ -18,7 +21,14 @@ class ActivityRecreationTester<A : ComponentActivity>(
   }
 
   fun recreateWith(block: () -> Unit) {
+    val activityBefore = testRule.activity
     block()
+
+    try {
+      testRule.waitUntil(2.seconds) { activityBefore != testRule.activity }
+    } catch (e: ComposeTimeoutException) {
+      throw RuntimeException("Timed out waiting for the Activity to be recreated", e)
+    }
 
     val composeTest = testRule::class.java.getDeclaredField("composeTest").also {
       it.isAccessible = true

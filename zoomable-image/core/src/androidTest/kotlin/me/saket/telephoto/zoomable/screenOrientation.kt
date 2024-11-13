@@ -19,6 +19,7 @@ internal fun <A : ComponentActivity> AndroidComposeTestRule<ActivityScenarioRule
 
     if (currentOrientation != targetOrientation) {
       runOnUiThread {
+        println("Changing orientation to $orientation")
         activity.requestedOrientation = targetOrientation
       }
       this.waitForIdle()

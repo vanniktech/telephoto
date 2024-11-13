@@ -1520,6 +1520,7 @@ class ZoomableImageTest {
     (rule.onNodeWithTag("image")).run {
       performTouchInput { doubleClick(center - Offset(0f, 360f)) }
     }
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_rotation]")
     }

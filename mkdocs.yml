@@ -49,6 +49,8 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.caret # Underlines.
   - admonition  # Warning call-outs.
+  - mdx_truly_sane_lists: # Nested list items
+      nested_indent: 2
 
 plugins:
   - search

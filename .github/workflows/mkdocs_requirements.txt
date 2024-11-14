@@ -30,11 +30,14 @@ lxml==4.9.2
     # via mkdocs-video
 markdown==3.3.7
     # via
+    #   mdx-truly-sane-lists
     #   mkdocs
     #   mkdocs-material
     #   pymdown-extensions
 markupsafe==2.1.2
     # via jinja2
+mdx-truly-sane-lists==1.3
+    # via -r mkdocs_requirements.in
 mergedeep==1.3.4
     # via mkdocs
 mkdocs==1.4.2

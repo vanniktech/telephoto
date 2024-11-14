@@ -2,7 +2,7 @@ name: Publish project website
 
 on:
   push:
-    branches: [ trunk ]
+    branches: [ trunk, docs ]
 
 jobs:
   deploy-website:

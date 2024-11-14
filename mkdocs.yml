@@ -8,7 +8,7 @@ copyright: 'Copyright &copy; 2023 Saket Narayan'
 remote_branch: gh-pages
 
 theme:
-  name: 'material'
+  name: 'mkdocs'
   custom_dir: 'docs/overrides'
   logo: assets/logo_192.png
   favicon: assets/logo_192.png
@@ -49,6 +49,8 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.caret # Underlines.
   - admonition  # Warning call-outs.
+  - mdx_truly_sane_lists: # Nested list items
+      nested_indent: 2
 
 plugins:
   - search

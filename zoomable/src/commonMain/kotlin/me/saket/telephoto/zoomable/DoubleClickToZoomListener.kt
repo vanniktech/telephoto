@@ -32,7 +32,7 @@ fun interface DoubleClickToZoomListener {
    * Toggles between [ZoomSpec.maxZoomFactor] and the minimum zoom factor on double clicks.
    */
   @Deprecated(
-    message = "Use DoubleClickToZoomListener.Cycle() instead",
+    message = "Use DoubleClickToZoomListener.cycle() instead",
     replaceWith = ReplaceWith("DoubleClickToZoomListener.cycle()"),
   )
   data object ToggleBetweenMinAndMax : DoubleClickToZoomListener {

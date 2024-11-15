@@ -64,7 +64,7 @@ internal data class CoilImageSource(
             .data(model)
             .build(),
         imageLoader = imageLoader,
-        sizeResolver = { canvasSize.first().toCoilSize() }
+        sizeResolver = { canvasSize.first().toCoilSize() },
       )
     }
     return resolver.resolved
@@ -72,7 +72,7 @@ internal data class CoilImageSource(
 
   private fun Size.toCoilSize() = CoilSize(
     width = if (width.isFinite()) Dimension(width.roundToInt()) else Dimension.Undefined,
-    height = if (height.isFinite()) Dimension(height.roundToInt()) else Dimension.Undefined
+    height = if (height.isFinite()) Dimension(height.roundToInt()) else Dimension.Undefined,
   )
 }
 

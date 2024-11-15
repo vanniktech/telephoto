@@ -76,8 +76,7 @@ Modifier.zoomable(
 )
 ```
 
-The default behavior of toggling between minimum and maximum zoom levels on double-clicks can be overridden by using
-the `onDoubleClick` parameter:
+The default behavior of toggling between minimum and maximum zoom levels on double-clicks can be overridden by using the `onDoubleClick` parameter:
 
 ```kotlin
 Modifier.zoomable(

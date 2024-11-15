@@ -204,8 +204,8 @@ For detecting double clicks, `ZoomableImage` consumes all tap gestures making it
 
 The default behavior of toggling between minimum and maximum zoom levels on double-clicks can be overridden by using the `onDoubleClick` parameter:
 
-=== "Coil" hl_lines="3"
-    ```kotlin
+=== "Coil"
+    ```kotlin hl_lines="3"
     ZoomableAsyncImage(
       model = "https://example.com/image.jpg",
       onDoubleClick = { state, centroid -> … },

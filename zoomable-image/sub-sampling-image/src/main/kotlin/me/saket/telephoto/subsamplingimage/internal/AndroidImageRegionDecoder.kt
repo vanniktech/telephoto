@@ -3,7 +3,7 @@ package me.saket.telephoto.subsamplingimage.internal
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import android.os.Build
-import androidx.compose.ui.graphics.painter.Painter
+import android.os.Build.VERSION.SDK_INT
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 import me.saket.telephoto.subsamplingimage.internal.ExifMetadata.ImageOrientation
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder.DecodeResult
 import me.saket.telephoto.subsamplingimage.toAndroidConfig
 
 /** Bitmap decoder backed by Android's [BitmapRegionDecoder]. */
@@ -29,7 +30,7 @@ internal class AndroidImageRegionDecoder private constructor(
 
   override val imageSize: IntSize get() = decoder.size()
 
-  override suspend fun decodeRegion(region: ImageRegionTile): Painter {
+  override suspend fun decodeRegion(region: ImageRegionTile): DecodeResult {
     val options = BitmapFactory.Options().apply {
       inSampleSize = region.sampleSize.size
       inPreferredConfig = imageOptions.config.toAndroidConfig()
@@ -53,9 +54,12 @@ internal class AndroidImageRegionDecoder private constructor(
       }
     }
     if (bitmap != null) {
-      return RotatedBitmapPainter(
-        image = bitmap,
-        orientation = exif.orientation,
+      return DecodeResult(
+        painter = RotatedBitmapPainter(
+          image = bitmap,
+          orientation = exif.orientation,
+        ),
+        hasUltraHdrContent = if (SDK_INT >= 34) bitmap.hasGainmap() else false,
       )
     } else {
       error("BitmapRegionDecoder returned a null bitmap. Image format may not be supported: $imageSource.")

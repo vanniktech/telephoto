@@ -35,6 +35,7 @@ import me.saket.telephoto.subsamplingimage.internal.maxScale
 import me.saket.telephoto.subsamplingimage.internal.overlaps
 import me.saket.telephoto.subsamplingimage.internal.scaledAndOffsetBy
 import me.saket.telephoto.zoomable.ZoomableContentTransformation
+import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder.DecodeResult as ImageDecodeResult
 
 /** State for [SubSamplingImage]. Created using [rememberSubSamplingImageState]. */
 @Stable
@@ -74,7 +75,7 @@ internal class RealSubSamplingImageState(
    * versions, layout changes caused image flickering because tile updates were asynchronous
    * and lagged by one frame.
    */
-  private var loadedImages: ImmutableMap<ImageRegionTile, Painter> by mutableStateOf(persistentMapOf())
+  private var loadedImages: ImmutableMap<ImageRegionTile, ImageDecodeResult> by mutableStateOf(persistentMapOf())
 
   private val isReadyToBeDisplayed: Boolean by derivedStateOf {
     val viewportSize = viewportSize
@@ -135,7 +136,7 @@ internal class RealSubSamplingImageState(
       if (tile.isVisible && (!tile.isBase || canDrawBaseTile)) {
         ViewportImageTile(
           tile = tile,
-          painter = loadedImages[tile.region] ?: if (tile.isBase) imagePreview else null,
+          painter = loadedImages[tile.region]?.painter ?: if (tile.isBase) imagePreview else null,
         )
       } else null
     }.toImmutableList()

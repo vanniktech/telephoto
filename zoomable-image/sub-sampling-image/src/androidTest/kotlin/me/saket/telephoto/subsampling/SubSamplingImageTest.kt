@@ -26,7 +26,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.LocalContext
@@ -256,7 +255,7 @@ class SubSamplingImageTest {
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageRegionDecoder.DecodeResult {
           return if (region.sampleSize == ImageSampleSize(1) && region.bounds.left == 3648) {
             delay(Long.MAX_VALUE)
             error("shouldn't reach here")
@@ -316,7 +315,7 @@ class SubSamplingImageTest {
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageRegionDecoder.DecodeResult {
           val isBaseTile = region.sampleSize.size == 8
           val isCentroidTile = region.sampleSize.size == 1 && region.bounds == IntRect(0, 1200, 1216, 3265)
           return if (isBaseTile || (isCentroidTile && !firstNonBaseTileReceived.getAndSet(true))) {
@@ -574,7 +573,7 @@ class SubSamplingImageTest {
     val gatedDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageRegionDecoder.DecodeResult {
           return previewBitmapMutex.withLock {
             real.decodeRegion(region)
           }.also {
@@ -668,12 +667,15 @@ class SubSamplingImageTest {
     val fakeRegionDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile): Painter {
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageRegionDecoder.DecodeResult {
           return if (region.sampleSize == ImageSampleSize(1)) {
             if (region.bounds.topLeft == IntOffset(4864, 1200)) {
               mutexForDecodingLastTile.lock()
             }
-            ColorPainter(Color.Yellow.copy(alpha = 0.5f))
+            ImageRegionDecoder.DecodeResult(
+              painter = ColorPainter(Color.Yellow.copy(alpha = 0.5f)),
+              hasUltraHdrContent = false,
+            )
           } else {
             real.decodeRegion(region)
           }
@@ -728,7 +730,7 @@ class SubSamplingImageTest {
     val recordingDecoderFactory = ImageRegionDecoder.Factory { params ->
       val real = AndroidImageRegionDecoder.Factory.create(params)
       object : ImageRegionDecoder by real {
-        override suspend fun decodeRegion(region: ImageRegionTile) =
+        override suspend fun decodeRegion(region: ImageRegionTile): ImageRegionDecoder.DecodeResult =
           real.decodeRegion(region).also {
             if (region.sampleSize == ImageSampleSize(1)) {
               decodedRegionCount.incrementAndGet()

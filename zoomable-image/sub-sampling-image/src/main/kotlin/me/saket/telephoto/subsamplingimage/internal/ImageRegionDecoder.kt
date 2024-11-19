@@ -6,6 +6,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
+import dev.drewhamilton.poko.Poko
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 
@@ -17,13 +18,19 @@ import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
 internal interface ImageRegionDecoder {
   val imageSize: IntSize
 
-  suspend fun decodeRegion(region: ImageRegionTile): Painter
+  suspend fun decodeRegion(region: ImageRegionTile): DecodeResult
 
   fun close()
 
   fun interface Factory {
     suspend fun create(params: FactoryParams): ImageRegionDecoder
   }
+
+  @Poko
+  class DecodeResult(
+    val painter: Painter,
+    val hasUltraHdrContent: Boolean,
+  )
 
   class FactoryParams(
     val context: Context,

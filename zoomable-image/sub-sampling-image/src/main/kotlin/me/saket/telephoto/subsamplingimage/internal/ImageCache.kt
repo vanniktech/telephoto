@@ -34,7 +34,7 @@ internal class ImageCache(
   private val cachedImages = MutableStateFlow(emptyMap<ImageRegionTile, LoadingState>())
 
   private sealed interface LoadingState {
-    data class Loaded(val painter: Painter) : LoadingState
+    data class Loaded(val painter: ImageRegionDecoder.DecodeResult) : LoadingState
     data class InFlight(val job: Job) : LoadingState
   }
 
@@ -72,7 +72,7 @@ internal class ImageCache(
     }
   }
 
-  fun observeCachedImages(): Flow<ImmutableMap<ImageRegionTile, Painter>> {
+  fun observeCachedImages(): Flow<ImmutableMap<ImageRegionTile, ImageRegionDecoder.DecodeResult>> {
     return cachedImages.map { map ->
       buildMap(capacity = map.size) {
         map.forEach { (region, state) ->

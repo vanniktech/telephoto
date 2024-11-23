@@ -47,14 +47,14 @@ internal object DefaultHardwareShortcutDetector : HardwareShortcutDetector {
 
   private fun KeyEvent.isZoomInEvent(): Boolean {
     return this.key == Key.Equals && when (HostPlatform.current) {
-      HostPlatform.Android -> isCtrlPressed
+      HostPlatform.Android, HostPlatform.iOS -> isCtrlPressed
       HostPlatform.Desktop -> isMetaPressed
     }
   }
 
   private fun KeyEvent.isZoomOutEvent(): Boolean {
     return key == Key.Minus && when (HostPlatform.current) {
-      HostPlatform.Android -> isCtrlPressed
+      HostPlatform.Android, HostPlatform.iOS -> isCtrlPressed
       HostPlatform.Desktop -> isMetaPressed
     }
   }

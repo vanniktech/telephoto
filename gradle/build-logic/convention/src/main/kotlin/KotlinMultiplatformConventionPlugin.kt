@@ -26,10 +26,8 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
       iosArm64()
       iosX64()
       iosSimulatorArm64()
-      if (pluginManager.hasPlugin("com.android.library")) {
-        androidTarget {
-          publishLibraryVariants("release")
-        }
+      androidTarget {
+        publishLibraryVariants("release")
       }
 
       configureKotlin()

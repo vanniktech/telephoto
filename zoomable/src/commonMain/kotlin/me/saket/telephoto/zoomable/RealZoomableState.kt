@@ -60,6 +60,7 @@ import me.saket.telephoto.zoomable.internal.times
 import me.saket.telephoto.zoomable.internal.unaryMinus
 import me.saket.telephoto.zoomable.internal.withOrigin
 import me.saket.telephoto.zoomable.internal.withZoomAndTranslate
+import kotlin.jvm.JvmInline
 import kotlin.math.abs
 
 @Stable

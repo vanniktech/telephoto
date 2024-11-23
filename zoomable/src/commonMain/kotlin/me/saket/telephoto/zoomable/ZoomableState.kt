@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
+import kotlin.jvm.JvmName
 
 /**
  * Create a [ZoomableState] that can be used with [Modifier.zoomable].

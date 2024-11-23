@@ -27,7 +27,6 @@ import kotlinx.coroutines.coroutineScope
  * transformations are consumed by the user as well as to write custom transformation methods
  * using [transform] suspend function.
  */
-@JvmDefaultWithCompatibility
 internal interface TransformableState {
   /**
    * Call this function to take control of transformations and gain the ability to send transform
@@ -53,7 +52,6 @@ internal interface TransformableState {
 /**
  * Scope used for suspending transformation operations
  */
-@JvmDefaultWithCompatibility
 internal interface TransformScope {
   /**
    * Attempts to transform by [zoomChange] in relative multiplied value, by [panChange] in

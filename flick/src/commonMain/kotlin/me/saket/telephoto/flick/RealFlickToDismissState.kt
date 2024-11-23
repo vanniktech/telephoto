@@ -19,7 +19,7 @@ import me.saket.telephoto.flick.FlickToDismissState.GestureState.Dragging
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Idle
 import me.saket.telephoto.flick.FlickToDismissState.GestureState.Resetting
 import me.saket.telephoto.flick.internal.animateWithDuration
-import java.lang.Math.toRadians
+import me.saket.telephoto.flick.internal.toRadians
 import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -34,7 +34,7 @@ internal class RealFlickToDismissState(
 
   override val rotationZ: Float by derivedStateOf {
     if (rotateOnDrag) {
-      offsetFraction * if (dragStartedOnLeftSide) -MaxRotation else MaxRotation
+      offsetFraction * if (dragStartedOnLeftSide) -MaxRotationInDegrees else MaxRotationInDegrees
     } else {
       0f
     }
@@ -86,7 +86,7 @@ internal class RealFlickToDismissState(
     draggableState.drag(MutatePriority.PreventUserInput) {
       try {
         val distanceCoveredByRotation = if (rotateOnDrag) {
-          val theta = toRadians(MaxRotation.toDouble()).toFloat()
+          val theta = MaxRotationInDegrees.toRadians()
           (1f - sin(theta)) * (theta * (contentSize.diagonal / 2))
         } else {
           0f
@@ -126,7 +126,7 @@ internal class RealFlickToDismissState(
     /** Differences below this value are ignored when comparing two zoom values. */
     private const val ZoomDeltaEpsilon = 0.01f
 
-    private const val MaxRotation = 20f
+    private const val MaxRotationInDegrees = 20f
 
     internal const val FlingSlopMultiplier = 10f // A large enough value to exclude short flings.
   }

@@ -2,7 +2,7 @@ name: Run tests and publish snapshot
 
 on:
   push:
-    branches: [ trunk ]
+    branches: [ trunk, saket/nov24/deubg-ci ]
   pull_request:
 
 jobs:

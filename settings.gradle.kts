@@ -33,4 +33,3 @@ include(":zoomable-image:glide")
 include(":zoomable-image:sub-sampling-image")
 include(":sample")
 include(":test-util")
-

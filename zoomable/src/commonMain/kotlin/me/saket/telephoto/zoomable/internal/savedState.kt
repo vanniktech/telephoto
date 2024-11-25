@@ -1,4 +1,4 @@
-@file:Suppress("DataClassPrivateConstructor", "OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE")
+@file:Suppress("DataClassPrivateConstructor")
 
 package me.saket.telephoto.zoomable.internal
 

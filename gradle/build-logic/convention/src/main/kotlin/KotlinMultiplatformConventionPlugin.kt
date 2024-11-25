@@ -2,22 +2,18 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.jetbrains.compose.ComposeExtension
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.gradle.api.plugins.ExtensionAware as ExtensionAwarePlugin
 import org.jetbrains.compose.ComposePlugin as JetbrainsComposePlugin
 
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
 class KotlinMultiplatformConventionPlugin : Plugin<Project> {
   override fun apply(target: Project) = with(target) {
     plugins.run {
       apply("org.jetbrains.kotlin.multiplatform")
+      apply("org.jetbrains.kotlin.plugin.compose")
       apply("org.jetbrains.compose")
-    }
-
-    extensions.configure<ComposeExtension> {
-      val compilerDependencyDeclaration = libs.findLibrary("androidx.compose.compiler").get().get().let {
-        "${it.module}:${it.version}"
-      }
-      kotlinCompilerPlugin.set(compilerDependencyDeclaration)
     }
 
     extensions.configure<KotlinMultiplatformExtension> {
@@ -26,8 +22,14 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
       iosArm64()
       iosX64()
       iosSimulatorArm64()
-      androidTarget {
-        publishLibraryVariants("release")
+      if (pluginManager.hasPlugin("com.android.library")) {
+        androidTarget {
+          publishLibraryVariants("release")
+          compilerOptions {
+            // https://developer.android.com/kotlin/parcelize#setup_parcelize_for_kotlin_multiplatform
+            freeCompilerArgs.addAll("-P", "plugin:org.jetbrains.kotlin.parcelize:additionalAnnotation=me.saket.telephoto.zoomable.internal.AndroidParcelize")
+          }
+        }
       }
 
       configureKotlin()

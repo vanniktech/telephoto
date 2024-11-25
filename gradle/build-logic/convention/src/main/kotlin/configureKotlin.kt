@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -15,6 +16,10 @@ internal fun Project.configureKotlin() {
         "-Xcontext-receivers",
         "-Xexpect-actual-classes", // https://youtrack.jetbrains.com/issue/KT-61573
       )
+
+      // Disable K2 until I can find a better way to reference internal members from other modules.
+      // https://youtrack.jetbrains.com/issue/KT-67920
+      languageVersion.set(KotlinVersion.KOTLIN_1_9)
     }
   }
 

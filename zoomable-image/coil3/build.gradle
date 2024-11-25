@@ -4,7 +4,6 @@ plugins {
   id("me.saket.kotlin.android")
   id("me.saket.compose")
   id("me.saket.android.test")
-  id("app.cash.molecule") version libs.versions.molecule
 }
 
 android {
@@ -19,6 +18,7 @@ dependencies {
 
   androidTestImplementation(projects.testUtil)
   androidTestImplementation(libs.turbine)
+  androidTestImplementation(libs.molecule.runtime)
   androidTestImplementation(libs.okhttp.mockWebServer)
   androidTestImplementation(libs.coil3.gif)
   androidTestImplementation(libs.coil3.svg)

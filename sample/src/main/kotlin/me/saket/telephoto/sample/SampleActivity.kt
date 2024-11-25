@@ -8,29 +8,39 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.Coil
 import coil.ImageLoader
+import coil.compose.AsyncImage
 import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.delay
 import me.saket.telephoto.sample.gallery.MediaAlbum
 import me.saket.telephoto.sample.gallery.MediaItem
+import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
 import java.util.concurrent.Executor
 
 class SampleActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    if (BuildConfig.DEBUG) {
-      enableStrictMode()
-    }
+//    if (BuildConfig.DEBUG) {
+//      enableStrictMode()
+//    }
     enableEdgeToEdge()
     setupImmersiveMode()
     super.onCreate(savedInstanceState)
@@ -78,11 +88,51 @@ class SampleActivity : AppCompatActivity() {
       }
 
       TelephotoTheme {
-        Navigation(
-          initialScreenKey = GalleryScreenKey(album)
+//        Navigation(
+//          initialScreenKey = GalleryScreenKey(album)
+//        )
+
+        // Mock loading two images after 3 seconds
+        var imagePaths by remember {
+          mutableStateOf(
+            Pair<String, String?>(
+              "file:///android_asset/thumbnail.jpeg",
+              null
+            )
+          )
+        }
+        LaunchedEffect(Unit) {
+          delay(1_000)
+          println("------------------------")
+          imagePaths = Pair(
+            "file:///android_asset/fullSize.jpeg",
+            "file:///android_asset/thumbnail.jpeg"
+          )
+        }
+
+        ImageViewer(
+          imagePath = imagePaths.first,
+          previousImagePath = imagePaths.second
         )
       }
     }
+  }
+
+  @Composable
+  private fun ImageViewer(
+    imagePath: String,
+    previousImagePath: String?,
+  ) {
+    // Change ZoomableAsyncImage to AsyncImage to stop flickering
+    ZoomableAsyncImage(
+      model = ImageRequest.Builder(LocalContext.current)
+        .data(imagePath)
+        .memoryCacheKey(imagePath)
+        .placeholderMemoryCacheKey(previousImagePath)
+        .build(),
+      contentDescription = "Image View",
+      modifier = Modifier.fillMaxSize()
+    )
   }
 
   private fun enableStrictMode() {

@@ -202,9 +202,16 @@ internal class RealZoomableState internal constructor(
    * listening to pan & zoom gestures.
    */
   internal val isReadyToInteract: Boolean by derivedStateOf {
+    (
     viewportSize.isSpecifiedAndNonEmpty
       && unscaledContentLocation != ZoomableContentLocation.Unspecified
       && unscaledContentLocation.location(viewportSize, layoutDirection).size.isSpecifiedAndNonEmpty
+      ).also {
+        println("isReady? $it (viewport = $viewportSize, content location = $unscaledContentLocation")
+        runCatching {
+          println("bounds = ${unscaledContentLocation.location(viewportSize, layoutDirection)}")
+        }
+      }
   }
 
   @Suppress("NAME_SHADOWING")

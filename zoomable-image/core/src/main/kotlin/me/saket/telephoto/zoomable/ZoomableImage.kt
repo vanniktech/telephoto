@@ -10,6 +10,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -86,6 +87,9 @@ fun ZoomableImage(
         snapshotFlow { canvasSize }.filter { it.isSpecified && !it.isEmpty() }
       }
     )
+  }
+  LaunchedEffect(resolved) {
+    println("resolved = $resolved")
   }
 
   // When ZoomableImage() is focused, the actual image underneath might not be displayed yet or

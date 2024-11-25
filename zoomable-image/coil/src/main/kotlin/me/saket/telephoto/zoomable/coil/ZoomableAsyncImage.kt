@@ -144,8 +144,11 @@ fun ZoomableImageSource.Companion.coil(
   imageLoader: ImageLoader = LocalContext.current.imageLoader
 ): ZoomableImageSource {
   val model = StableModel(model, equalityDelegate = DefaultModelEqualityDelegate)
-  return remember(model, imageLoader) {
+  return remember {
     CoilImageSource(model.model, imageLoader)
+  }.also {
+    it.model = model.model
+    it.imageLoader = imageLoader
   }
 }
 

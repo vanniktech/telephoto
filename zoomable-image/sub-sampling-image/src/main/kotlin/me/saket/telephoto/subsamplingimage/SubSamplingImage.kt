@@ -68,6 +68,16 @@ fun SubSamplingImage(
           )
         }
       }
+    } else {
+      val preview = state.imagePreview
+      preview?.run {
+        println("preview size = ${preview.intrinsicSize}")
+        draw(
+          size = preview.intrinsicSize,
+          alpha = alpha,
+          colorFilter = colorFilter
+        )
+      }
     }
   }
 

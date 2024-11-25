@@ -22,6 +22,7 @@ import kotlin.time.Duration
  */
 @Stable
 interface ZoomableImageSource {
+  @Stable
   companion object; // For extensions.
 
   @Composable

@@ -13,6 +13,7 @@ internal abstract class RememberWorker : RememberObserver {
   abstract suspend fun work()
 
   override fun onRemembered() {
+    // todo: Dispatchers.Main may not be available? see https://github.com/coil-kt/coil/pull/2699/files#diff-5a05d039d66bb86d3c317f17ca1b0ccf5be11215461f2811beb3b07cfa9c945e
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     scope!!.launch { work() }
   }

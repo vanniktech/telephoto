@@ -518,7 +518,7 @@ class CoilImageSourceTest {
     rule.setContent {
       val counter by produceState(initialValue = 0) {
         while (true) {
-          this.value++
+          this.value += 1
           delay(50.milliseconds)
         }
       }

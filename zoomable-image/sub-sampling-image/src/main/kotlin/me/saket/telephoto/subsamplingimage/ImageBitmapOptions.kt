@@ -43,7 +43,7 @@ class ImageBitmapOptions internal constructor(
 fun ImageBitmapOptions(from: Bitmap): ImageBitmapOptions {
   val androidColorSpace = if (SDK_INT >= 26) from.colorSpace else null
   return ImageBitmapOptions(
-    config = from.config.toComposeConfig(),
+    config = from.config!!.toComposeConfig(),
     colorSpace = if (SDK_INT >= 26) androidColorSpace?.toComposeColorSpace() else null,
     androidColorSpace = androidColorSpace,
   )

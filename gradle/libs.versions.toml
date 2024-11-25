@@ -1,6 +1,6 @@
 [versions]
 minSdk = "21"
-compileSdk = "34"
+compileSdk = "35"
 kotlin = "1.9.24"
 agp = "8.7.1"  # https://maven.google.com/web/index.html?q=gradle.plugin#com.android.library:com.android.library.gradle.plugin
 androidx-compose-compiler = "1.5.14"

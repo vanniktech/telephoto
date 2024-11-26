@@ -265,10 +265,10 @@ class CoilImageSourceTest {
   @Test fun reload_image_when_image_request_changes() = runTest {
     var imageUrl by mutableStateOf(serverRule.server.url("placeholder_image.png"))
 
-    var isImageDisplayed = false
+    lateinit var imageState: ZoomableImageState
     rule.setContent {
       ZoomableAsyncImage(
-        state = rememberZoomableImageState().also { isImageDisplayed = it.isImageDisplayed },
+        state = rememberZoomableImageState().also { imageState = it },
         modifier = Modifier.fillMaxSize(),
         model = ImageRequest.Builder(LocalContext.current)
           .data(imageUrl)
@@ -278,17 +278,40 @@ class CoilImageSourceTest {
       )
     }
 
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil { imageState.isImageDisplayed }
     rule.runOnIdle {
+      assertThat(imageState.zoomableState.contentTransformation.contentSize).isEqualTo(Size(256f, 256f))
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_first_image")
     }
 
     imageUrl = serverRule.server.url("full_image.png")
 
-    rule.waitUntil(5.seconds) { !isImageDisplayed }
-    rule.waitUntil(5.seconds) { isImageDisplayed }
+    rule.waitUntil {
+      imageState.zoomableState.contentTransformation.contentSize == Size(512f, 512f)
+    }
     rule.runOnIdle {
       dropshots.assertSnapshot(rule.activity, testName.methodName + "_second_image")
+    }
+  }
+
+  @Test fun current_image_is_not_reset_when_a_new_request_is_received() = runTest {
+    var imageUrl by mutableStateOf(
+      withContext(Dispatchers.IO) {
+        serverRule.server.url("placeholder_image.png")
+      }
+    )
+
+    resolve { imageUrl }.test {
+      skipItems(1)  // Default item.
+      assertThat(awaitItem().delegate!!).isInstanceOf<ZoomableImageSource.SubSamplingDelegate>()
+
+      imageUrl = withContext(Dispatchers.IO) {
+        serverRule.server.url("full_image.png")
+      }
+
+      assertThat(awaitItem().delegate)
+        .isNotNull()
+        .isInstanceOf<ZoomableImageSource.SubSamplingDelegate>()
     }
   }
 

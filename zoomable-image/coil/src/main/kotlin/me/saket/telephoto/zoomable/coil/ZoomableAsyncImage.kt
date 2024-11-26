@@ -4,8 +4,10 @@ package me.saket.telephoto.zoomable.coil
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -15,8 +17,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
 import coil.compose.DefaultModelEqualityDelegate
-import coil.compose.EqualityDelegate
 import coil.imageLoader
+import kotlinx.coroutines.flow.distinctUntilChanged
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.ZoomableImageSource
@@ -143,24 +145,12 @@ fun ZoomableImageSource.Companion.coil(
   model: Any?,
   imageLoader: ImageLoader = LocalContext.current.imageLoader
 ): ZoomableImageSource {
-  val model = StableModel(model, equalityDelegate = DefaultModelEqualityDelegate)
-  return remember(model, imageLoader) {
-    CoilImageSource(model.model, imageLoader)
+  val model by rememberUpdatedState(model)
+  val imageLoader by rememberUpdatedState(imageLoader)
+  return remember {
+    CoilImageSource(
+      models = snapshotFlow { model }.distinctUntilChanged(DefaultModelEqualityDelegate::equals),
+      imageLoaders = snapshotFlow { imageLoader },
+    )
   }
-}
-
-/**
- * Adapted from Coil's AsyncImageState. Prevents relaunching a new image request when
- * `ImageRequest#listener`, `placeholder` or `target` change.
- */
-@Stable
-private class StableModel(
-  val model: Any?,
-  private val equalityDelegate: EqualityDelegate,
-) {
-  override fun equals(other: Any?): Boolean =
-    equalityDelegate.equals(model, (other as? StableModel)?.model)
-
-  override fun hashCode(): Int =
-    equalityDelegate.hashCode(model)
 }

@@ -30,7 +30,10 @@ import coil3.toAndroidUri
 import coil3.transition.CrossfadeTransition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.subsamplingimage.ImageBitmapOptions
 import me.saket.telephoto.subsamplingimage.SubSamplingImageSource
@@ -50,21 +53,24 @@ import coil3.size.Size as CoilSize
 
 @Immutable
 internal data class Coil3ImageSource(
-  private val model: Any?,
-  private val imageLoader: ImageLoader,
+  private val models: Flow<Any?>,
+  private val imageLoaders: Flow<ImageLoader>,
 ) : ZoomableImageSource {
 
   @Composable
   override fun resolve(canvasSize: Flow<Size>): ResolveResult {
     val context = LocalContext.current
     val resolver = remember(this) {
-      Resolver(
-        request = model as? ImageRequest
+      val requests = models.map { model ->
+        model as? ImageRequest
           ?: ImageRequest.Builder(context)
             .data(model)
-            .build(),
-        imageLoader = imageLoader,
-        sizeResolver = { canvasSize.first().toCoilSize() }
+            .build()
+      }
+      Resolver(
+        requests = requests,
+        imageLoaders = imageLoaders,
+        sizeResolver = { canvasSize.first().toCoilSize() },
       )
     }
     return resolver.resolved
@@ -77,8 +83,8 @@ internal data class Coil3ImageSource(
 }
 
 internal class Resolver(
-  internal val request: ImageRequest,
-  internal val imageLoader: ImageLoader,
+  private val requests: Flow<ImageRequest>,
+  private val imageLoaders: Flow<ImageLoader>,
   private val sizeResolver: SizeResolver,
 ) : RememberWorker() {
 
@@ -87,10 +93,16 @@ internal class Resolver(
   )
 
   override suspend fun work() {
-    work(skipMemoryCache = false)
+    combine(requests, imageLoaders, ::Pair).collectLatest { (request, imageLoader) ->
+      work(
+        request = request,
+        imageLoader = imageLoader,
+        skipMemoryCache = false,
+      )
+    }
   }
 
-  private suspend fun work(skipMemoryCache: Boolean) {
+  private suspend fun work(request: ImageRequest, imageLoader: ImageLoader, skipMemoryCache: Boolean) {
     val result = imageLoader.execute(
       request.newBuilder()
         .size(request.defined.sizeResolver ?: sizeResolver)
@@ -132,7 +144,7 @@ internal class Resolver(
         .build()
     )
 
-    val imageSource = when (val it = result.toSubSamplingImageSource()) {
+    val imageSource = when (val it = result.toSubSamplingImageSource(imageLoader)) {
       null -> null
       is EligibleForSubSampling -> it.source
       is ImageDeletedOnlyFromDiskCache -> {
@@ -141,7 +153,7 @@ internal class Resolver(
         } else {
           // The app's disk cache was possibly deleted, but the image is
           // still cached in memory. Reload the image from the network.
-          work(skipMemoryCache = true)
+          work(request, imageLoader, skipMemoryCache = true)
         }
         return
       }
@@ -171,7 +183,7 @@ internal class Resolver(
     data object ImageDeletedOnlyFromDiskCache : ImageSourceCreationResult
   }
 
-  private suspend fun ImageResult.toSubSamplingImageSource(): ImageSourceCreationResult? {
+  private suspend fun ImageResult.toSubSamplingImageSource(imageLoader: ImageLoader): ImageSourceCreationResult? {
     val result = this
     val resultImage = (result as? SuccessResult)?.image
     val source = if (result is SuccessResult && resultImage is BitmapImage) {
@@ -197,7 +209,7 @@ internal class Resolver(
           // Possible reasons for reaching this code path:
           // - Locally stored images such as assets, resource, etc.
           // - Remote image that wasn't saved to disk because of a "no-store" HTTP header.
-          result.request.mapRequestDataToUriOrNull()
+          result.request.mapRequestDataToUriOrNull(imageLoader)
             ?.let { uri -> SubSamplingImageSource.contentUriOrNull(uri, preview) }
             ?.also {
               if (result.dataSource == DataSource.MEMORY_CACHE && !it.exists(request.context)) {
@@ -235,8 +247,8 @@ internal class Resolver(
     }
   }
 
-  private fun ImageRequest.mapRequestDataToUriOrNull(): Uri? {
-    val dummyOptions = Options(request.context) // Good enough for mappers that only use Context.
+  private fun ImageRequest.mapRequestDataToUriOrNull(imageLoader: ImageLoader): Uri? {
+    val dummyOptions = Options(this.context) // Good enough for mappers that only use Context.
     return when (val mapped = imageLoader.components.map(data, dummyOptions)) {
       is Uri -> mapped
       is File -> Uri.parse(mapped.path)

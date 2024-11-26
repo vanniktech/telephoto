@@ -34,8 +34,8 @@ kotlinx-immutableCollections = "0.3.8" # https://github.com/Kotlin/kotlinx.colle
 mavenPublish = "0.30.0"
 dropshots = "0.4.1"
 dropboxDiffer = "0.0.2" # https://github.com/dropbox/differ/blob/main/CHANGELOG.md
-emulatorWtf = "0.17.0"  # https://docs.emulator.wtf/changelog/
-emulatorWtfCli = "0.18.0"  # https://docs.emulator.wtf/changelog/
+emulatorWtfPlugin = "0.18.0"  # https://docs.emulator.wtf/changelog/
+emulatorWtfCli = "0.11.1"  # https://docs.emulator.wtf/changelog/
 okio = "3.9.1"
 okhttp-mockWebServer = "4.12.0"
 dokka = "1.9.20"
@@ -62,7 +62,7 @@ paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 dropshots = { id = "com.dropbox.dropshots", version.ref = "dropshots" }
-emulatorWtf = { id = "wtf.emulator.gradle", version.ref = "emulatorWtf" }
+emulatorWtf = { id = "wtf.emulator.gradle", version.ref = "emulatorWtfPlugin" }
 metalava = { id = "me.tylerbwong.gradle.metalava", version.ref = "metalava" }
 poko = { id = "dev.drewhamilton.poko", version.ref = "poko" }
 
@@ -75,7 +75,7 @@ plugin-compose-compiler = { module = "org.jetbrains.kotlin:compose-compiler-grad
 plugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 plugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "mavenPublish" }
 plugin-dropshots = { module = "com.dropbox.dropshots:dropshots-gradle-plugin", version.ref = "dropshots" }
-plugin-emulatorWtf = { module = "wtf.emulator:gradle-plugin", version.ref = "emulatorWtf" }
+plugin-emulatorWtf = { module = "wtf.emulator:gradle-plugin", version.ref = "emulatorWtfPlugin" }
 plugin-metalava = { module = "me.tylerbwong.gradle.metalava:plugin", version.ref = "metalava" }
 plugin-poko = { module = "dev.drewhamilton.poko:poko-gradle-plugin", version.ref = "poko" }
 

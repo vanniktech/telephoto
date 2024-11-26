@@ -1692,6 +1692,54 @@ class ZoomableImageTest {
     rule.onAllNodesWithContentDescription("nicolas cage").assertCountEquals(1)
   }
 
+  // Regression test for https://github.com/saket/telephoto/issues/114.
+  @Test fun render_image_changes_immediately() {
+    var resolvedZoomableImage by mutableStateOf(
+      ResolveResult(
+        delegate = ZoomableImageSource.SubSamplingDelegate(
+          SubSamplingImageSource.asset(name = "fox_250.jpg", preview = null)
+        ),
+        placeholder = null,
+      )
+    )
+
+    lateinit var imageState: ZoomableImageState
+    rule.setContent {
+      ZoomableImage(
+        modifier = Modifier.fillMaxSize(),
+        image = object : ZoomableImageSource {
+          @Composable override fun resolve(canvasSize: Flow<Size>): ResolveResult = resolvedZoomableImage
+        },
+        state = rememberZoomableImageState().also { imageState = it },
+        contentDescription = null,
+      )
+    }
+
+    rule.waitUntil { imageState.isImageDisplayedInFullQuality }
+    rule.runOnIdle {
+      dropshots.assertSnapshot(rule.activity, testName.methodName + "_[before_image_change]")
+    }
+
+    // When a new image is applied, its preview should be displayed immediately on
+    // the next frame instead of waiting for the full image to be decoded from the disk.
+    val newAssetName = "fox_1500.jpg"
+    resolvedZoomableImage = ResolveResult(
+      delegate = ZoomableImageSource.SubSamplingDelegate(
+        SubSamplingImageSource.asset(
+          name = newAssetName,
+          // It would have been nice to use AsyncZoomableImage() directly here, but this
+          // mimics how ZoomableImageSource.coil() sends the loaded image as a preview.
+          preview = rule.activity.assets.open(newAssetName)
+            .use(BitmapFactory::decodeStream)
+            .asImageBitmap(),
+        )
+      ),
+    )
+
+    rule.mainClock.advanceTimeByFrame()
+    dropshots.assertSnapshot(rule.activity, testName.methodName + "_[after_image_change]")
+  }
+
   private class PainterStub(private val initialSize: Size) : Painter() {
     private var delegatePainter: Painter? by mutableStateOf(null)
     private var loaded = false

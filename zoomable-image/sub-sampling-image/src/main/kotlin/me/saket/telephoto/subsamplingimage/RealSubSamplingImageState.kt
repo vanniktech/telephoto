@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
@@ -40,12 +41,12 @@ import me.saket.telephoto.subsamplingimage.internal.ImageRegionDecoder.DecodeRes
 /** State for [SubSamplingImage]. Created using [rememberSubSamplingImageState]. */
 @Stable
 internal class RealSubSamplingImageState(
-  imageSource: SubSamplingImageSource,
+  private val imageSource: SubSamplingImageSource,
   private val contentTransformation: () -> ZoomableContentTransformation,
 ) : SubSamplingImageState {
 
   override val imageSize: IntSize?
-    get() = imageRegionDecoder?.imageSize
+    get() = imageRegionDecoder?.imageSize ?: imageSource.preview?.size()
 
   // todo: it isn't great that the preview image remains in memory even after the full image is loaded.
   private val imagePreview: Painter? =
@@ -79,7 +80,7 @@ internal class RealSubSamplingImageState(
 
   private val isReadyToBeDisplayed: Boolean by derivedStateOf {
     val viewportSize = viewportSize
-    val imageSize = imageRegionDecoder?.imageSize
+    val imageSize = imageSize
     viewportSize?.isNotEmpty() == true && imageSize?.isNotEmpty() == true
   }
 
@@ -144,13 +145,10 @@ internal class RealSubSamplingImageState(
 
   @Composable
   fun LoadImageTilesEffect() {
-    if (!isReadyToBeDisplayed) {
-      return
-    }
-
+    val imageRegionDecoder = imageRegionDecoder ?: return
     val scope = rememberCoroutineScope()
-    val imageCache = remember(this) {
-      ImageCache(scope, imageRegionDecoder!!)
+    val imageCache = remember(this, imageRegionDecoder) {
+      ImageCache(scope, imageRegionDecoder)
     }
 
     LaunchedEffect(imageCache, viewportTiles) {
@@ -165,3 +163,5 @@ internal class RealSubSamplingImageState(
     }
   }
 }
+
+private fun ImageBitmap.size(): IntSize = IntSize(width, height)

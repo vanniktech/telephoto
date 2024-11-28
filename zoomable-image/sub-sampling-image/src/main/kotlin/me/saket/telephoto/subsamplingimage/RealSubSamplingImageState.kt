@@ -1,5 +1,6 @@
 package me.saket.telephoto.subsamplingimage
 
+import android.os.Build.VERSION.SDK_INT
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -10,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.IntSize
@@ -28,7 +30,6 @@ import me.saket.telephoto.subsamplingimage.internal.ImageSampleSize
 import me.saket.telephoto.subsamplingimage.internal.ViewportImageTile
 import me.saket.telephoto.subsamplingimage.internal.ViewportTile
 import me.saket.telephoto.subsamplingimage.internal.calculateFor
-import me.saket.telephoto.subsamplingimage.internal.contains
 import me.saket.telephoto.subsamplingimage.internal.fastMapNotNull
 import me.saket.telephoto.subsamplingimage.internal.generate
 import me.saket.telephoto.subsamplingimage.internal.isNotEmpty
@@ -77,6 +78,13 @@ internal class RealSubSamplingImageState(
    * and lagged by one frame.
    */
   private var loadedImages: ImmutableMap<ImageRegionTile, ImageDecodeResult> by mutableStateOf(persistentMapOf())
+
+  /**
+   * Whether the image contains [ultra HDR content](https://developer.android.com/media/grow/ultra-hdr/display).
+   */
+  val hasUltraHdrContent: Boolean by derivedStateOf {
+    loadedImages.any { (_, result) -> result.hasUltraHdrContent } || imageSource.preview?.hasUltraHdrContent() == true
+  }
 
   private val isReadyToBeDisplayed: Boolean by derivedStateOf {
     val viewportSize = viewportSize
@@ -162,6 +170,10 @@ internal class RealSubSamplingImageState(
       }
     }
   }
+}
+
+private fun ImageBitmap.hasUltraHdrContent(): Boolean {
+  return if (SDK_INT >= 34) asAndroidBitmap().hasGainmap() else false
 }
 
 private fun ImageBitmap.size(): IntSize = IntSize(width, height)
